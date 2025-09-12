@@ -5,6 +5,8 @@ __pycache__/
 
 # GCP credentials
 local_agent/service_account_credentials.json
+.env
+.json
 
 # C extensions
 *.so
