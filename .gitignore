@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# GCP credentials
+local_agent/service_account_credentials.json
+
 # C extensions
 *.so
 
