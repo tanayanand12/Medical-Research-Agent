@@ -1,0 +1,78 @@
+{
+    "clusters": {
+        "Transradial Interventions": [
+            "Transradial access",
+            "Transradial procedure",
+            "Transradial catheterization",
+            "Coronary catheterization",
+            "Peripheral catheterization"
+        ],
+        "Hemostasis and Vascular Integrity": [
+            "Radial artery hemostasis",
+            "Patent hemostasis",
+            "Suction-actuated hemostasis",
+            "Vascular closure device",
+            "Radial artery patency",
+            "Radial artery occlusion",
+            "Hemostasis device"
+        ],
+        "Complications and Adverse Effects": [
+            "Radial artery complications",
+            "Access site complications",
+            "Major access site complications",
+            "Minor access site complications",
+            "Hematoma",
+            "Pseudoaneurysm",
+            "Arteriovenous fistula",
+            "Nerve compression",
+            "Patient comfort",
+            "Ease of use",
+            "Device-related adverse effects",
+            "Serious adverse effects",
+            "Unanticipated adverse device effect"
+        ],
+        "Clinical Trials and Protocols": [
+            "Good Clinical Practice",
+            "Clinical trial protocol",
+            "Multicenter clinical study",
+            "Nonrandomized clinical trial",
+            "Informed consent process",
+            "Institutional Review Board",
+            "Ethics Committee"
+        ],
+        "Diagnostic and Monitoring Techniques": [
+            "Reverse Barbeau test",
+            "Digital plethysmography",
+            "Duplex ultrasound",
+            "Radial artery flow",
+            "Ulnar artery compression"
+        ],
+        "Pharmacological and Medical Device Considerations": [
+            "Interventional cardiology",
+            "Anticoagulation therapy",
+            "Heparin administration",
+            "Medical adhesives",
+            "Biocompatibility testing",
+            "ISO 10993",
+            "MedDRA coding",
+            "CTCAE grading"
+        ]
+    },
+    "urls": [
+        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=(Transradial+access%20AND%20Radial+artery+hemostasis%20AND%20Radial+artery+complications%20AND%20Good+Clinical+Practice%20AND%20Reverse+Barbeau+test%20AND%20Interventional+cardiology)&retmode=json&datetype=pdat&mindate=2024/01/01&maxdate=2025/04/21&retmax=1000",
+        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=(Transradial+access%20OR%20Transradial+procedure%20OR%20Transradial+catheterization%20OR%20Coronary+catheterization%20OR%20Peripheral+catheterization)&retmode=json&datetype=pdat&mindate=2024/01/01&maxdate=2025/04/21&retmax=1000",
+        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=(Radial+artery+hemostasis%20OR%20Patent+hemostasis%20OR%20Suction-actuated+hemostasis%20OR%20Vascular+closure+device%20OR%20Radial+artery+patency%20OR%20Radial+artery+occlusion%20OR%20Hemostasis+device)&retmode=json&datetype=pdat&mindate=2024/01/01&maxdate=2025/04/21&retmax=1000",
+        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=(Radial+artery+complications%20OR%20Access+site+complications%20OR%20Major+access+site+complications%20OR%20Minor+access+site+complications%20OR%20Hematoma%20OR%20Pseudoaneurysm%20OR%20Arteriovenous+fistula%20OR%20Nerve+compression%20OR%20Patient+comfort%20OR%20Ease+of+use%20OR%20Device-related+adverse+effects%20OR%20Serious+adverse+effects%20OR%20Unanticipated+adverse+device+effect)&retmode=json&datetype=pdat&mindate=2024/01/01&maxdate=2025/04/21&retmax=1000",
+        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=(Good+Clinical+Practice%20OR%20Clinical+trial+protocol%20OR%20Multicenter+clinical+study%20OR%20Nonrandomized+clinical+trial%20OR%20Informed+consent+process%20OR%20Institutional+Review+Board%20OR%20Ethics+Committee)&retmode=json&datetype=pdat&mindate=2024/01/01&maxdate=2025/04/21&retmax=1000",
+        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=(Reverse+Barbeau+test%20OR%20Digital+plethysmography%20OR%20Duplex+ultrasound%20OR%20Radial+artery+flow%20OR%20Ulnar+artery+compression)&retmode=json&datetype=pdat&mindate=2024/01/01&maxdate=2025/04/21&retmax=1000",
+        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=(Interventional+cardiology%20OR%20Anticoagulation+therapy%20OR%20Heparin+administration%20OR%20Medical+adhesives%20OR%20Biocompatibility+testing%20OR%20ISO+10993%20OR%20MedDRA+coding%20OR%20CTCAE+grading)&retmode=json&datetype=pdat&mindate=2024/01/01&maxdate=2025/04/21&retmax=1000"
+    ],
+    "all_urls": [
+        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=(Transradial+access%20AND%20Radial+artery+hemostasis%20AND%20Radial+artery+complications%20AND%20Reverse+Barbeau+test%20AND%20Good+Clinical+Practice)&retmode=json&datetype=pdat&mindate=2024/01/01&maxdate=2025/04/21&retmax=1000",
+        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=(Transradial+access%20OR%20Transradial+procedure%20OR%20Transradial+catheterization%20OR%20Coronary+catheterization%20OR%20Peripheral+catheterization)&retmode=json&datetype=pdat&mindate=2024/01/01&maxdate=2025/04/21&retmax=1000",
+        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=(Radial+artery+hemostasis%20OR%20Patent+hemostasis%20OR%20Suction-actuated+hemostasis%20OR%20Vascular+closure+device%20OR%20Hemostasis+device%20OR%20Radial+artery+patency%20OR%20Radial+artery+occlusion)&retmode=json&datetype=pdat&mindate=2024/01/01&maxdate=2025/04/21&retmax=1000",
+        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=(Radial+artery+complications%20OR%20Access+site+complications%20OR%20Major+access+site+complications%20OR%20Minor+access+site+complications%20OR%20Hematoma%20OR%20Pseudoaneurysm%20OR%20Arteriovenous+fistula%20OR%20Nerve+compression%20OR%20Device-related+adverse+effects%20OR%20Serious+adverse+effects%20OR%20Unanticipated+adverse+device+effect%20OR%20Patient+comfort%20OR%20Ease+of+use)&retmode=json&datetype=pdat&mindate=2024/01/01&maxdate=2025/04/21&retmax=1000",
+        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=(Reverse+Barbeau+test%20OR%20Digital+plethysmography%20OR%20Duplex+ultrasound%20OR%20Radial+artery+flow%20OR%20Ulnar+artery+compression)&retmode=json&datetype=pdat&mindate=2024/01/01&maxdate=2025/04/21&retmax=1000",
+        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=(Good+Clinical+Practice%20OR%20Clinical+trial+protocol%20OR%20Multicenter+clinical+study%20OR%20Nonrandomized+clinical+trial%20OR%20Interventional+cardiology%20OR%20Anticoagulation+therapy%20OR%20Heparin+administration%20OR%20Medical+adhesives%20OR%20Biocompatibility+testing%20OR%20ISO+10993%20OR%20Informed+consent+process%20OR%20Institutional+Review+Board%20OR%20Ethics+Committee%20OR%20MedDRA+coding%20OR%20CTCAE+grading)&retmode=json&datetype=pdat&mindate=2024/01/01&maxdate=2025/04/21&retmax=1000"
+    ]
+}

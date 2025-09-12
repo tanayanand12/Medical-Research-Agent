@@ -1,0 +1,112 @@
+[
+  {
+    "query": "What is the radial artery occlusion rate for TR Band vs VasoStat?",
+    "category": "Medical research",
+    "expected": true,
+    "classified_as_medical": true,
+    "confidence": 0.95,
+    "domain": "medical_research",
+    "reason": "The query is related to comparing the radial artery occlusion rates between two medical devices, TR Band and VasoStat, indicating a research inquiry into the effectiveness or safety of these devices in a clinical setting.",
+    "result": "CORRECT"
+  },
+  {
+    "query": "What are the latest research findings on autophagy in neurological conditions?",
+    "category": "Medical research",
+    "expected": true,
+    "classified_as_medical": true,
+    "confidence": 0.9,
+    "domain": "medical_research",
+    "reason": "Query contains specific medical research terminology",
+    "result": "CORRECT"
+  },
+  {
+    "query": "Compare the efficacy of SGLT2 inhibitors versus GLP-1 receptor agonists in type 2 diabetes patients.",
+    "category": "Medical research",
+    "expected": true,
+    "classified_as_medical": true,
+    "confidence": 0.9,
+    "domain": "medical_research",
+    "reason": "Query contains specific medical research terminology",
+    "result": "CORRECT"
+  },
+  {
+    "query": "What does PubMed say about the use of monoclonal antibodies for autoimmune diseases?",
+    "category": "Medical research",
+    "expected": true,
+    "classified_as_medical": true,
+    "confidence": 0.9,
+    "domain": "medical_research",
+    "reason": "Query contains specific medical research terminology",
+    "result": "CORRECT"
+  },
+  {
+    "query": "What are the best stocks to invest in for 2025?",
+    "category": "Finance",
+    "expected": false,
+    "classified_as_medical": false,
+    "confidence": 0.0,
+    "domain": "finance",
+    "reason": "The query is related to stock investment, which falls under the domain of finance and not medical research.",
+    "result": "CORRECT"
+  },
+  {
+    "query": "Can you recommend some good movies to watch this weekend?",
+    "category": "Entertainment",
+    "expected": false,
+    "classified_as_medical": false,
+    "confidence": 0.9,
+    "domain": "non-medical",
+    "reason": "The query is about movie recommendations for entertainment purposes, not related to medical research.",
+    "result": "CORRECT"
+  },
+  {
+    "query": "What is the recipe for chocolate chip cookies?",
+    "category": "Cooking",
+    "expected": false,
+    "classified_as_medical": false,
+    "confidence": 0.9,
+    "domain": "non_medical",
+    "reason": "Query contains terminology specific to non-medical domains with no medical context",
+    "result": "CORRECT"
+  },
+  {
+    "query": "What is the effect of exercise on health?",
+    "category": "Health/Medical (ambiguous)",
+    "expected": null,
+    "classified_as_medical": true,
+    "confidence": 0.9,
+    "domain": "medical_research",
+    "reason": "Query contains specific medical research terminology",
+    "result": "AMBIGUOUS (no expected value)"
+  },
+  {
+    "query": "How does the healthcare system work in the United States?",
+    "category": "Healthcare policy (ambiguous)",
+    "expected": null,
+    "classified_as_medical": true,
+    "confidence": 0.9,
+    "domain": "medical_research",
+    "reason": "Query contains specific medical research terminology",
+    "result": "AMBIGUOUS (no expected value)"
+  },
+  {
+    "query": "Tell me about medical school requirements.",
+    "category": "Medical education (ambiguous)",
+    "expected": null,
+    "classified_as_medical": true,
+    "confidence": 0.9,
+    "domain": "medical_research",
+    "reason": "Query contains specific medical research terminology",
+    "result": "AMBIGUOUS (no expected value)"
+  },
+  {
+    "query": "What are normal blood pressure ranges?",
+    "category": "General medical (ambiguous)",
+    "expected": null,
+    "classified_as_medical": false,
+    "confidence": 0.9,
+    "domain": "non_medical",
+    "reason": "Query contains terminology specific to non-medical domains with no medical context",
+    "result": "AMBIGUOUS (no expected value)"
+  }
+]

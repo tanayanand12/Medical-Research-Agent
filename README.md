@@ -18,6 +18,7 @@ It leverages state-of-the-art Retrieval-Augmented Generation (RAG), vector searc
 - [GCP Integration](#gcp-integration)
 - [Agents](#agents)
 - [Installation](#installation)
+- [GCP Integration](#GCP-credentials)
 - [Quickstart](#quickstart)
 - [Usage](#usage)
 - [Indexing Pipeline](#indexing-pipeline)
@@ -154,6 +155,20 @@ Copy `.env.example` to `.env` and fill in your API keys and configuration:
 ```sh
 cp .env.example .env
 # Edit .env with your OpenAI API key, GCP credentials, model IDs, etc.
+```
+---
+### GCP Credentials
+
+If you use Google Cloud Platform features, place your GCP service account key as `local_agent/service_account_credentials.json`.  
+**This file is already excluded from version control via `.gitignore` for security.**  
+You may need to set the following environment variable before running the API:
+
+```sh
+export GOOGLE_APPLICATION_CREDENTIALS="local_agent/service_account_credentials.json"
+```
+Or on Windows:
+```sh
+set GOOGLE_APPLICATION_CREDENTIALS=local_agent/service_account_credentials.json
 ```
 
 ---
