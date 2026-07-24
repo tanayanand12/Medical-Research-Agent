@@ -2,8 +2,6 @@
 
 LLM-agnostic, graph-based orchestration system for clinical question answering. Retrieves evidence from PubMed, FDA, ClinicalTrials.gov, and local FAISS indexes, then synthesises citation-rich answers with quantified confidence scores.
 
-> **Version history:** The pre-LangGraph implementation is frozen on branch [`legacy/v1`](https://github.com/tanayanand12/Medical-Research-Agent/tree/legacy/v1) and tag [`v1.0.0-legacy`](https://github.com/tanayanand12/Medical-Research-Agent/releases/tag/v1.0.0-legacy). The [`main`](https://github.com/tanayanand12/Medical-Research-Agent/tree/main) branch contains the current precision evidence orchestration system evaluated in the accompanying paper.
-
 ## Architecture
 
 The system uses a **LangGraph StateGraph** with 8 nodes and 2 conditional routing edges:
@@ -39,6 +37,7 @@ format_response <----------------------------------------------+
 ### Install
 
 ```bash
+cd medical-research-agent
 python -m venv venv
 source venv/bin/activate      # Linux/macOS
 # venv\Scripts\activate       # Windows
@@ -87,31 +86,10 @@ Response includes: `answer`, `citations`, `confidence`, `trace_id`, `execution_t
 curl http://localhost:8000/health
 ```
 
-### Container
-
-Versioned images are published to GitHub Container Registry after the release workflow succeeds. The `v2.0.0` tag becomes pullable only once that workflow completes for tag `v2.0.0`—not before.
-
-```bash
-docker pull ghcr.io/tanayanand12/medical-research-agent:v2.0.0
-docker run --rm -p 8000:8000 \
-  -e OPENAI_API_KEY="$OPENAI_API_KEY" \
-  ghcr.io/tanayanand12/medical-research-agent:v2.0.0
-```
-
-Provider credentials are injected at runtime and are never baked into the image. Default model registry and configuration files such as `models.yaml` are included in the image, while model selection and provider settings can be overridden through runtime environment variables.
-
-## Continuous integration and delivery
-
-Pull requests and pushes to `main` run the deterministic offline test suite and build the container image without publishing it.
-
-Tags matching `v*` trigger the release workflow, which publishes versioned tags and `latest` to `ghcr.io/tanayanand12/medical-research-agent`. The same workflow accepts manual dispatch with image tags `manual` or `manual-*` for ad-hoc test builds.
-
-Live-provider evaluations are intentionally excluded from CI because they require credentials and query mutable external evidence services.
-
 ## Project Structure
 
 ```
-Medical-Research-Agent/         # repository root
+medical-research-agent/
 +-- research_agent_api_v2.py    # FastAPI server (/query, /health, /graph/*)
 +-- graph.py                    # LangGraph StateGraph (8 nodes, 2 conditional edges)
 +-- agent_state.py              # AgentState TypedDict (30+ fields)

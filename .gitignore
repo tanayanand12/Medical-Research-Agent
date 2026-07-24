@@ -15,11 +15,6 @@ venv/
 # Logs
 logs/
 
-# Generated local outputs
-.graphify_python
-graphify-out/
-*.out
-
 # Data & indexes (large files)
 data/indexes/
 *.index
