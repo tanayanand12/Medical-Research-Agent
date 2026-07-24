@@ -1,0 +1,25 @@
+[
+  {"id": "r_pubmed_01", "target_agents": ["pubmed"], "question": "Summarize peer-reviewed findings on GLP-1 receptor agonists and cardiovascular outcomes."},
+  {"id": "r_pubmed_02", "target_agents": ["pubmed"], "question": "What do cohort studies report about long-COVID cognitive symptoms?"},
+  {"id": "r_pubmed_03", "target_agents": ["pubmed"], "question": "Which meta-analyses compare DOACs with warfarin for atrial fibrillation?"},
+  {"id": "r_pubmed_04", "target_agents": ["pubmed"], "question": "Review published literature on microbiome changes in inflammatory bowel disease."},
+  {"id": "r_pubmed_05", "target_agents": ["pubmed"], "question": "How effective is pulmonary rehabilitation after COPD exacerbation?"},
+
+  {"id": "r_fda_01", "target_agents": ["fda"], "question": "What does the FDA label say about tirzepatide contraindications?"},
+  {"id": "r_fda_02", "target_agents": ["fda"], "question": "Has FDA issued a boxed warning for tofacitinib?"},
+  {"id": "r_fda_03", "target_agents": ["fda"], "question": "Which indications for dupilumab are approved in the United States?"},
+  {"id": "r_fda_04", "target_agents": ["fda"], "question": "Find openFDA adverse-event reports involving amiodarone."},
+  {"id": "r_fda_05", "target_agents": ["fda"], "question": "Was this insulin product subject to an FDA recall?"},
+
+  {"id": "r_ct_01", "target_agents": ["clinical_trials"], "question": "Which recruiting clinical trials test psilocybin for major depression?"},
+  {"id": "r_ct_02", "target_agents": ["clinical_trials"], "question": "List phase 3 trials of RSV vaccines in older adults."},
+  {"id": "r_ct_03", "target_agents": ["clinical_trials"], "question": "Are any NCT studies enrolling for gene therapy in sickle cell disease?"},
+  {"id": "r_ct_04", "target_agents": ["clinical_trials"], "question": "What are the endpoints of ongoing trials for Alzheimer's monoclonal antibodies?"},
+  {"id": "r_ct_05", "target_agents": ["clinical_trials"], "question": "Find interventional studies of digital therapeutics for insomnia."},
+
+  {"id": "r_local_01", "target_agents": ["local"], "question": "According to our hospital policy, when should a rapid response be activated?"},
+  {"id": "r_local_02", "target_agents": ["local"], "question": "What dose limit appears in this uploaded pharmacy memo?"},
+  {"id": "r_local_03", "target_agents": ["local"], "question": "Search the institutional formulary for restricted antibiotics."},
+  {"id": "r_local_04", "target_agents": ["local"], "question": "What does this internal protocol require before MRI contrast administration?"},
+  {"id": "r_local_05", "target_agents": ["local"], "question": "Retrieve the recommendation from this local guideline excerpt."}
+]

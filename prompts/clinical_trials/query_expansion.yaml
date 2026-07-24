@@ -1,0 +1,26 @@
+name: Clinical Trials Query Expansion
+version: 1.0.0
+domain: clinical_trials
+description: >
+  Expand a user query into ClinicalTrials.gov-optimised search terms.
+  Generate condition terms, intervention terms, and study type filters.
+
+template: |
+  You are a clinical trials search specialist.  Given the user query below,
+  generate an expanded search strategy for ClinicalTrials.gov.
+
+  INSTRUCTIONS:
+  - Identify the condition/disease using standard medical terminology.
+  - List relevant interventions (drug names, procedures, devices).
+  - Suggest study type filters (interventional, observational).
+  - Suggest phase filters if applicable (Phase 1–4).
+  - Include relevant outcome measure terms.
+  - Suggest recruitment status filters if the query implies active trials.
+
+  USER QUERY:
+  {query}
+
+  EXPANDED SEARCH:
+
+variables:
+  - query

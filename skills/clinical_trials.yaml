@@ -1,0 +1,38 @@
+name: Clinical Trials Search
+version: 1.0.0
+tool_name: search_clinical_trials
+description: >
+  Search ClinicalTrials.gov for ongoing and completed clinical trials,
+  study protocols, drug treatment evaluations, enrollment information,
+  intervention efficacy data, and randomized controlled trial results.
+domains:
+  - clinical_trials
+  - pharmacology
+  - oncology
+  - cardiology
+  - interventional
+  - endocrinology
+triggers:
+  keywords:
+    - clinical trial
+    - trial
+    - phase
+    - randomized
+    - placebo
+    - intervention
+    - efficacy
+    - endpoint
+    - protocol
+    - recruiting
+    - enrollment
+    - treatment
+    - drug
+    - therapy
+    - outcome
+    - study design
+    - control group
+  semantic_similarity_threshold: 0.6
+cost_estimates:
+  avg_tokens_input: 200
+  avg_tokens_output: 700
+  retrieval_time_sec: 3.5

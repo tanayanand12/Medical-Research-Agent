@@ -1,0 +1,151 @@
+# LiteLLM Model Registry — Phase 1
+# All LLM calls route through LLMClient, which reads this file at startup.
+# To add a new model: append an entry below and restart the server.
+
+models:
+  - model_name: gpt-4o
+    litellm_params:
+      api_key: os.environ/OPENAI_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.005
+      cost_per_1k_output_tokens: 0.015
+      context_window_tokens: 128000
+      supports_vision: true
+      tier: enterprise
+
+  - model_name: claude-3-5-sonnet
+    litellm_params:
+      api_key: os.environ/ANTHROPIC_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.003
+      cost_per_1k_output_tokens: 0.015
+      context_window_tokens: 200000
+      supports_vision: true
+      tier: enterprise
+
+  - model_name: ollama/llama3
+    litellm_params:
+      api_base: http://localhost:11434
+    model_info:
+      cost_per_1k_input_tokens: 0.0
+      cost_per_1k_output_tokens: 0.0
+      context_window_tokens: 8192
+      supports_vision: false
+      tier: local
+
+  - model_name: ollama/qwen2.5-coder:7b
+    litellm_params:
+      api_base: http://localhost:11434
+    model_info:
+      cost_per_1k_input_tokens: 0.0
+      cost_per_1k_output_tokens: 0.0
+      context_window_tokens: 32768
+      supports_vision: false
+      tier: local
+
+  - model_name: ollama/qwen2.5:3b
+    litellm_params:
+      api_base: http://localhost:11434
+    model_info:
+      cost_per_1k_input_tokens: 0.0
+      cost_per_1k_output_tokens: 0.0
+      context_window_tokens: 32768
+      supports_vision: false
+      tier: local
+
+  - model_name: ollama/mistral
+    litellm_params:
+      api_base: http://localhost:11434
+    model_info:
+      cost_per_1k_input_tokens: 0.0
+      cost_per_1k_output_tokens: 0.0
+      context_window_tokens: 32768
+      supports_vision: false
+      tier: local
+
+  - model_name: gemini/gemma-4-26b-a4b-it
+    litellm_params:
+      api_key: os.environ/GEMINI_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.0
+      cost_per_1k_output_tokens: 0.0
+      context_window_tokens: 128000
+      supports_vision: false
+      tier: fast
+
+  - model_name: gemini/gemini-2.5-flash-lite
+    litellm_params:
+      api_key: os.environ/GEMINI_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.000075
+      cost_per_1k_output_tokens: 0.0003
+      context_window_tokens: 1000000
+      supports_vision: false
+      tier: fast
+
+  - model_name: gemini/gemini-2.5-flash
+    litellm_params:
+      api_key: os.environ/GEMINI_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.00015
+      cost_per_1k_output_tokens: 0.0006
+      context_window_tokens: 1000000
+      supports_vision: true
+      tier: enterprise
+
+embeddings:
+  - model_name: text-embedding-3-large
+    litellm_params:
+      api_key: os.environ/OPENAI_API_KEY
+    model_info:
+      dimension: 3072
+      cost_per_1k_tokens: 0.00002
+
+  - model_name: text-embedding-3-small
+    litellm_params:
+      api_key: os.environ/OPENAI_API_KEY
+    model_info:
+      dimension: 1536
+      cost_per_1k_tokens: 0.00002
+
+  - model_name: ollama/nomic-embed-text
+    litellm_params:
+      api_base: http://localhost:11434
+    model_info:
+      dimension: 768
+      cost_per_1k_tokens: 0.0
+
+  - model_name: gemini/text-embedding-004
+    litellm_params:
+      api_key: os.environ/GEMINI_API_KEY
+    model_info:
+      dimension: 768
+      cost_per_1k_tokens: 0.000025
+
+  - model_name: gemini/gemini-embedding-001
+    litellm_params:
+      api_key: os.environ/GEMINI_API_KEY
+    model_info:
+      dimension: 3072
+      cost_per_1k_tokens: 0.0
+
+  - model_name: cohere/embed-english-v3.0
+    litellm_params:
+      api_key: os.environ/COHERE_API_KEY
+    model_info:
+      dimension: 1024
+      cost_per_1k_tokens: 0.0001
+
+  - model_name: huggingface/BAAI/bge-large-en-v1.5
+    litellm_params:
+      api_key: os.environ/HUGGINGFACE_API_KEY
+    model_info:
+      dimension: 1024
+      cost_per_1k_tokens: 0.0
+
+# Phase 6: HNSW index parameters for DenseIndex
+# Override these to tune recall vs. speed trade-offs.
+hnsw_index:
+  M: 16                   # Bi-directional links per node (higher = better recall, more memory)
+  ef_construction: 200    # Candidate list size during build (higher = better recall, slower build)
+  ef_search: 64           # Candidate list size during query (higher = better recall, slower query)

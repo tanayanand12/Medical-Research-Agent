@@ -1,0 +1,297 @@
+{
+  "generated_at": "2026-07-24T19:11:02.505263+00:00",
+  "config": {
+    "dataset": "medical_benchmark",
+    "dataset_path": "F:\\GitHub uploads\\Medical-Research-Agent-Paper\\medical-research-agent\\eval\\data\\medical_benchmark.json",
+    "models": [
+      "gemini/gemini-2.5-flash-lite"
+    ],
+    "judge_model": "gemini/gemini-2.5-flash",
+    "agents": [
+      "pubmed",
+      "fda",
+      "clinical_trials",
+      "local"
+    ],
+    "n_samples": null,
+    "seed": 42,
+    "embedding_model": "ollama/nomic-embed-text"
+  },
+  "summary": {
+    "overall": {
+      "scores": {
+        "faithfulness": 0.0,
+        "answer_relevancy": 0.0,
+        "answer_correctness": 0.0,
+        "citation_fidelity": 0.0,
+        "hallucination_rate": 0.0
+      },
+      "ci95": {
+        "faithfulness": [
+          0.0,
+          0.0
+        ],
+        "answer_relevancy": [
+          0.0,
+          0.0
+        ],
+        "answer_correctness": [
+          0.0,
+          0.0
+        ],
+        "citation_fidelity": [
+          0.0,
+          0.0
+        ],
+        "hallucination_rate": [
+          0.0,
+          0.0
+        ]
+      },
+      "valid_counts": {
+        "faithfulness": 2,
+        "answer_relevancy": 2,
+        "answer_correctness": 2,
+        "citation_fidelity": 10,
+        "hallucination_rate": 2
+      },
+      "sample_count": 10,
+      "error_count": 10,
+      "latency_sec": {
+        "mean": 1000.474,
+        "median": 810.523,
+        "p95": 1500.022
+      }
+    },
+    "by_model": {
+      "gemini/gemini-2.5-flash-lite": {
+        "scores": {
+          "faithfulness": 0.0,
+          "answer_relevancy": 0.0,
+          "answer_correctness": 0.0,
+          "citation_fidelity": 0.0,
+          "hallucination_rate": 0.0
+        },
+        "ci95": {
+          "faithfulness": [
+            0.0,
+            0.0
+          ],
+          "answer_relevancy": [
+            0.0,
+            0.0
+          ],
+          "answer_correctness": [
+            0.0,
+            0.0
+          ],
+          "citation_fidelity": [
+            0.0,
+            0.0
+          ],
+          "hallucination_rate": [
+            0.0,
+            0.0
+          ]
+        },
+        "valid_counts": {
+          "faithfulness": 2,
+          "answer_relevancy": 2,
+          "answer_correctness": 2,
+          "citation_fidelity": 10,
+          "hallucination_rate": 2
+        },
+        "sample_count": 10,
+        "error_count": 10,
+        "latency_sec": {
+          "mean": 1000.474,
+          "median": 810.523,
+          "p95": 1500.022
+        }
+      }
+    },
+    "by_agent": {
+      "pubmed": {
+        "scores": {
+          "faithfulness": 0.0,
+          "answer_relevancy": 0.0,
+          "answer_correctness": 0.0,
+          "citation_fidelity": 0.0,
+          "hallucination_rate": 0.0
+        },
+        "ci95": {
+          "faithfulness": [
+            0.0,
+            0.0
+          ],
+          "answer_relevancy": [
+            0.0,
+            0.0
+          ],
+          "answer_correctness": [
+            0.0,
+            0.0
+          ],
+          "citation_fidelity": [
+            0.0,
+            0.0
+          ],
+          "hallucination_rate": [
+            0.0,
+            0.0
+          ]
+        },
+        "valid_counts": {
+          "faithfulness": 1,
+          "answer_relevancy": 1,
+          "answer_correctness": 1,
+          "citation_fidelity": 5,
+          "hallucination_rate": 1
+        },
+        "sample_count": 5,
+        "error_count": 5,
+        "latency_sec": {
+          "mean": 1401.459,
+          "median": 1496.57,
+          "p95": 1500.097
+        }
+      },
+      "fda": {
+        "scores": {
+          "faithfulness": 0.0,
+          "answer_relevancy": 0.0,
+          "answer_correctness": 0.0,
+          "citation_fidelity": 0.0,
+          "hallucination_rate": 0.0
+        },
+        "ci95": {
+          "faithfulness": [
+            0.0,
+            0.0
+          ],
+          "answer_relevancy": [
+            0.0,
+            0.0
+          ],
+          "answer_correctness": [
+            0.0,
+            0.0
+          ],
+          "citation_fidelity": [
+            0.0,
+            0.0
+          ],
+          "hallucination_rate": [
+            0.0,
+            0.0
+          ]
+        },
+        "valid_counts": {
+          "faithfulness": 0,
+          "answer_relevancy": 0,
+          "answer_correctness": 0,
+          "citation_fidelity": 0,
+          "hallucination_rate": 0
+        },
+        "sample_count": 0,
+        "error_count": 0,
+        "latency_sec": {
+          "mean": 0.0,
+          "median": 0.0,
+          "p95": 0.0
+        }
+      },
+      "clinical_trials": {
+        "scores": {
+          "faithfulness": 0.0,
+          "answer_relevancy": 0.0,
+          "answer_correctness": 0.0,
+          "citation_fidelity": 0.0,
+          "hallucination_rate": 0.0
+        },
+        "ci95": {
+          "faithfulness": [
+            0.0,
+            0.0
+          ],
+          "answer_relevancy": [
+            0.0,
+            0.0
+          ],
+          "answer_correctness": [
+            0.0,
+            0.0
+          ],
+          "citation_fidelity": [
+            0.0,
+            0.0
+          ],
+          "hallucination_rate": [
+            0.0,
+            0.0
+          ]
+        },
+        "valid_counts": {
+          "faithfulness": 0,
+          "answer_relevancy": 0,
+          "answer_correctness": 0,
+          "citation_fidelity": 0,
+          "hallucination_rate": 0
+        },
+        "sample_count": 0,
+        "error_count": 0,
+        "latency_sec": {
+          "mean": 0.0,
+          "median": 0.0,
+          "p95": 0.0
+        }
+      },
+      "local": {
+        "scores": {
+          "faithfulness": 0.0,
+          "answer_relevancy": 0.0,
+          "answer_correctness": 0.0,
+          "citation_fidelity": 0.0,
+          "hallucination_rate": 0.0
+        },
+        "ci95": {
+          "faithfulness": [
+            0.0,
+            0.0
+          ],
+          "answer_relevancy": [
+            0.0,
+            0.0
+          ],
+          "answer_correctness": [
+            0.0,
+            0.0
+          ],
+          "citation_fidelity": [
+            0.0,
+            0.0
+          ],
+          "hallucination_rate": [
+            0.0,
+            0.0
+          ]
+        },
+        "valid_counts": {
+          "faithfulness": 1,
+          "answer_relevancy": 1,
+          "answer_correctness": 1,
+          "citation_fidelity": 5,
+          "hallucination_rate": 1
+        },
+        "sample_count": 5,
+        "error_count": 5,
+        "latency_sec": {
+          "mean": 599.489,
+          "median": 599.961,
+          "p95": 600.378
+        }
+      }
+    }
+  },
+  "source_run": "F:\\GitHub uploads\\Medical-Research-Agent-Paper\\medical-research-agent\\results\\benchmark_all_agents_20260724_211700.json"
+}

@@ -1,0 +1,1051 @@
+{
+  "generated_at": "2026-07-24T17:47:28.634168+00:00",
+  "source_run": "results\\benchmark_all_agents_20260724_214522_audited.json",
+  "judge_model": "ollama/qwen2.5:3b",
+  "logprob_assessment": {
+    "available": false,
+    "reason": "The evaluated Ollama Qwen endpoints did not expose calibrated token log-probabilities. No token-confidence proxy was imputed."
+  },
+  "metric_scope": {
+    "context_relevance": "Retrieved-set relevance to the question.",
+    "context_sufficiency": "Coverage of reference-answer facts by retrieved contexts.",
+    "citation_claim_support": "Support for citation-bearing claims by the retrieved set; not strict source-specific entailment.",
+    "sentence_citation_coverage": "Heuristic fraction of factual sentences with valid markers."
+  },
+  "summary": {
+    "overall": {
+      "scores": {
+        "context_relevance": 0.3865,
+        "context_sufficiency": 0.334,
+        "citation_claim_support": 0.324,
+        "sentence_citation_coverage": 0.3374
+      },
+      "ci95": {
+        "context_relevance": [
+          0.2145,
+          0.5715
+        ],
+        "context_sufficiency": [
+          0.1575,
+          0.532
+        ],
+        "citation_claim_support": [
+          0.1465,
+          0.525
+        ],
+        "sentence_citation_coverage": [
+          0.1931,
+          0.4818
+        ]
+      },
+      "valid_counts": {
+        "context_relevance": 20,
+        "context_sufficiency": 20,
+        "citation_claim_support": 20,
+        "sentence_citation_coverage": 20
+      },
+      "sample_count": 20,
+      "mean_retrieved_contexts": 3.55
+    },
+    "by_agent": {
+      "clinical_trials": {
+        "scores": {
+          "context_relevance": 0.18,
+          "context_sufficiency": 0.06,
+          "citation_claim_support": 0.08,
+          "sentence_citation_coverage": 0.19
+        },
+        "ci95": {
+          "context_relevance": [
+            0.04,
+            0.34
+          ],
+          "context_sufficiency": [
+            0.0,
+            0.14
+          ],
+          "citation_claim_support": [
+            0.0,
+            0.2
+          ],
+          "sentence_citation_coverage": [
+            0.0,
+            0.49
+          ]
+        },
+        "valid_counts": {
+          "context_relevance": 5,
+          "context_sufficiency": 5,
+          "citation_claim_support": 5,
+          "sentence_citation_coverage": 5
+        },
+        "sample_count": 5,
+        "mean_retrieved_contexts": 5.0
+      },
+      "fda": {
+        "scores": {
+          "context_relevance": 0.38,
+          "context_sufficiency": 0.34,
+          "citation_claim_support": 0.3,
+          "sentence_citation_coverage": 0.1375
+        },
+        "ci95": {
+          "context_relevance": [
+            0.04,
+            0.74
+          ],
+          "context_sufficiency": [
+            0.02,
+            0.72
+          ],
+          "citation_claim_support": [
+            0.0,
+            0.7
+          ],
+          "sentence_citation_coverage": [
+            0.0333,
+            0.2417
+          ]
+        },
+        "valid_counts": {
+          "context_relevance": 5,
+          "context_sufficiency": 5,
+          "citation_claim_support": 5,
+          "sentence_citation_coverage": 5
+        },
+        "sample_count": 5,
+        "mean_retrieved_contexts": 5.0
+      },
+      "local": {
+        "scores": {
+          "context_relevance": 0.8,
+          "context_sufficiency": 0.8,
+          "citation_claim_support": 0.8,
+          "sentence_citation_coverage": 0.6667
+        },
+        "ci95": {
+          "context_relevance": [
+            0.4,
+            1.0
+          ],
+          "context_sufficiency": [
+            0.4,
+            1.0
+          ],
+          "citation_claim_support": [
+            0.4,
+            1.0
+          ],
+          "sentence_citation_coverage": [
+            0.4333,
+            0.9
+          ]
+        },
+        "valid_counts": {
+          "context_relevance": 5,
+          "context_sufficiency": 5,
+          "citation_claim_support": 5,
+          "sentence_citation_coverage": 5
+        },
+        "sample_count": 5,
+        "mean_retrieved_contexts": 1.2
+      },
+      "pubmed": {
+        "scores": {
+          "context_relevance": 0.186,
+          "context_sufficiency": 0.136,
+          "citation_claim_support": 0.116,
+          "sentence_citation_coverage": 0.3556
+        },
+        "ci95": {
+          "context_relevance": [
+            0.06,
+            0.312
+          ],
+          "context_sufficiency": [
+            0.02,
+            0.252
+          ],
+          "citation_claim_support": [
+            0.0,
+            0.248
+          ],
+          "sentence_citation_coverage": [
+            0.1222,
+            0.6
+          ]
+        },
+        "valid_counts": {
+          "context_relevance": 5,
+          "context_sufficiency": 5,
+          "citation_claim_support": 5,
+          "sentence_citation_coverage": 5
+        },
+        "sample_count": 5,
+        "mean_retrieved_contexts": 3.0
+      }
+    }
+  },
+  "results": [
+    {
+      "question": "What is the evidence for SGLT2 inhibitors in heart failure with preserved ejection fraction?",
+      "agent": "pubmed",
+      "retrieved_context_count": 3,
+      "metrics": {
+        "context_relevance": {
+          "score": 0.3,
+          "reason": "The retrieved context provides information about SGLT2 inhibitors and their effects on HFpEF, but does not directly address the specific evidence for SGLT2 inhibitors in heart failure with preserved ejection fraction as stated in the reference answer.",
+          "valid": true,
+          "raw": {
+            "score": 0.3,
+            "reason": "The retrieved context provides information about SGLT2 inhibitors and their effects on HFpEF, but does not directly address the specific evidence for SGLT2 inhibitors in heart failure with preserved ejection fraction as stated in the reference answer."
+          }
+        },
+        "context_sufficiency": {
+          "score": 0.1,
+          "reason": "The retrieved context mentions studies comparing GLP1-RA and SGLT2 inhibitors, but does not provide specific evidence for SGLT2 inhibitors alone in HFpEF as stated in the reference answer.",
+          "valid": true,
+          "raw": {
+            "score": 0.1,
+            "reason": "The retrieved context mentions studies comparing GLP1-RA and SGLT2 inhibitors, but does not provide specific evidence for SGLT2 inhibitors alone in HFpEF as stated in the reference answer."
+          }
+        },
+        "citation_claim_support": {
+          "score": 0.0,
+          "reason": "The retrieved context does not contain any claims that can be supported by citations from the retrieved contexts, as it is a general review of SGLT2 inhibitors and their effects on HFpEF without specific evidence for SGLT2 inhibitors alone.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "The retrieved context does not contain any claims that can be supported by citations from the retrieved contexts, as it is a general review of SGLT2 inhibitors and their effects on HFpEF without specific evidence for SGLT2 inhibitors alone."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.16666666666666666,
+          "reason": "1/6 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 1,
+            "total_sentences": 6
+          }
+        }
+      }
+    },
+    {
+      "question": "What are the recommended first-line pharmacologic treatments for type 2 diabetes according to recent guidelines?",
+      "agent": "pubmed",
+      "retrieved_context_count": 3,
+      "metrics": {
+        "context_relevance": {
+          "score": 0.0,
+          "reason": "The retrieved contexts do not contain information relevant to the recommended first-line pharmacologic treatments for type 2 diabetes as asked in the question.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "The retrieved contexts do not contain information relevant to the recommended first-line pharmacologic treatments for type 2 diabetes as asked in the question."
+          }
+        },
+        "context_sufficiency": {
+          "score": 0.0,
+          "reason": "The retrieved contexts do not provide clinically important facts about the recommended first-line pharmacologic treatments for type 2 diabetes as asked in the reference answer.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "The retrieved contexts do not provide clinically important facts about the recommended first-line pharmacologic treatments for type 2 diabetes as asked in the reference answer."
+          }
+        },
+        "citation_claim_support": {
+          "score": 0.0,
+          "reason": "The retrieved contexts do not contain any factual claims that can be supported by at least one of the retrieved passages, as requested in citation_claim_support.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "The retrieved contexts do not contain any factual claims that can be supported by at least one of the retrieved passages, as requested in citation_claim_support."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.3333333333333333,
+          "reason": "1/3 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 1,
+            "total_sentences": 3
+          }
+        }
+      }
+    },
+    {
+      "question": "What is the role of anticoagulation in atrial fibrillation and how is stroke risk stratified?",
+      "agent": "pubmed",
+      "retrieved_context_count": 3,
+      "metrics": {
+        "context_relevance": {
+          "score": 0.33,
+          "reason": "The context provides information about atrial fibrillation, stroke prevention, and the CHA2DS2-VA score but does not directly address the specific question of anticoagulation role in atrial fibrillation and stroke risk stratification.",
+          "valid": true,
+          "raw": {
+            "score": 0.33,
+            "reason": "The context provides information about atrial fibrillation, stroke prevention, and the CHA2DS2-VA score but does not directly address the specific question of anticoagulation role in atrial fibrillation and stroke risk stratification."
+          }
+        },
+        "context_sufficiency": {
+          "score": 0.33,
+          "reason": "The context mentions oral anticoagulation for AF management, CHA2DS2-VA score for stroke risk stratification, and the importance of anticoagulation in preventing strokes. However, it does not provide sufficient information to fully answer the question about the role of anticoagulation and stroke risk stratification.",
+          "valid": true,
+          "raw": {
+            "score": 0.33,
+            "reason": "The context mentions oral anticoagulation for AF management, CHA2DS2-VA score for stroke risk stratification, and the importance of anticoagulation in preventing strokes. However, it does not provide sufficient information to fully answer the question about the role of anticoagulation and stroke risk stratification."
+          }
+        },
+        "citation_claim_support": {
+          "score": 0.33,
+          "reason": "The context cites a study (NCT03062319) but does not provide enough information to support specific claims about the optimal combination of anticoagulants and antiplatelets for patients with concurrent atherosclerotic cardiovascular disease.",
+          "valid": true,
+          "raw": {
+            "score": 0.33,
+            "reason": "The context cites a study (NCT03062319) but does not provide enough information to support specific claims about the optimal combination of anticoagulants and antiplatelets for patients with concurrent atherosclerotic cardiovascular disease."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.4444444444444444,
+          "reason": "4/9 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 4,
+            "total_sentences": 9
+          }
+        }
+      }
+    },
+    {
+      "question": "What are the main adverse effects associated with immune checkpoint inhibitors in oncology?",
+      "agent": "pubmed",
+      "retrieved_context_count": 3,
+      "metrics": {
+        "context_relevance": {
+          "score": 0.3,
+          "reason": "The retrieved contexts do not directly address the specific adverse effects associated with immune checkpoint inhibitors as asked in the question.",
+          "valid": true,
+          "raw": {
+            "score": 0.3,
+            "reason": "The retrieved contexts do not directly address the specific adverse effects associated with immune checkpoint inhibitors as asked in the question."
+          }
+        },
+        "context_sufficiency": {
+          "score": 0.25,
+          "reason": "One of the retrieved contexts provides information about immune-related adverse events, but it does not specifically mention all the adverse effects listed in the candidate answer. The other two contexts are more general and do not directly support the specific claims made.",
+          "valid": true,
+          "raw": {
+            "score": 0.25,
+            "reason": "One of the retrieved contexts provides information about immune-related adverse events, but it does not specifically mention all the adverse effects listed in the candidate answer. The other two contexts are more general and do not directly support the specific claims made."
+          }
+        },
+        "citation_claim_support": {
+          "score": 0.25,
+          "reason": "One of the retrieved contexts contains citations, but these citations do not directly support the specific adverse effects listed in the candidate answer. The other two contexts are more general and do not provide direct support for the claims made.",
+          "valid": true,
+          "raw": {
+            "score": 0.25,
+            "reason": "One of the retrieved contexts contains citations, but these citations do not directly support the specific adverse effects listed in the candidate answer. The other two contexts are more general and do not provide direct support for the claims made."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.8333333333333334,
+          "reason": "5/6 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 5,
+            "total_sentences": 6
+          }
+        }
+      }
+    },
+    {
+      "question": "How effective are statins for primary prevention of cardiovascular disease?",
+      "agent": "pubmed",
+      "retrieved_context_count": 3,
+      "metrics": {
+        "context_relevance": {
+          "score": 0.0,
+          "reason": "The retrieved contexts do not provide any information on the effectiveness of statins for primary prevention of cardiovascular disease.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "The retrieved contexts do not provide any information on the effectiveness of statins for primary prevention of cardiovascular disease."
+          }
+        },
+        "context_sufficiency": {
+          "score": 0.0,
+          "reason": "There is no clinically important facts in the retrieved contexts that support the reference answer regarding primary prevention of cardiovascular disease with statins.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "There is no clinically important facts in the retrieved contexts that support the reference answer regarding primary prevention of cardiovascular disease with statins."
+          }
+        },
+        "citation_claim_support": {
+          "score": 0.0,
+          "reason": "The provided sources do not contain any information on the effectiveness of statins for primary prevention of cardiovascular disease, thus no claims can be supported by the retrieved set.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "The provided sources do not contain any information on the effectiveness of statins for primary prevention of cardiovascular disease, thus no claims can be supported by the retrieved set."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.0,
+          "reason": "0/3 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 0,
+            "total_sentences": 3
+          }
+        }
+      }
+    },
+    {
+      "question": "What FDA-approved indications exist for semaglutide?",
+      "agent": "fda",
+      "retrieved_context_count": 5,
+      "metrics": {
+        "context_relevance": {
+          "score": 0.7,
+          "reason": "The provided context covers the administration instructions, dosage recommendations, and interactions with insulin for OZEMPIC, which are relevant to the question.",
+          "valid": true,
+          "raw": {
+            "score": 0.7,
+            "reason": "The provided context covers the administration instructions, dosage recommendations, and interactions with insulin for OZEMPIC, which are relevant to the question."
+          }
+        },
+        "context_sufficiency": {
+          "score": 0.6,
+          "reason": "While the context provides detailed information about OZEMPIC's use and administration, it lacks specific details such as adverse event signals or recall classifications related to OZEMPIC.",
+          "valid": true,
+          "raw": {
+            "score": 0.6,
+            "reason": "While the context provides detailed information about OZEMPIC's use and administration, it lacks specific details such as adverse event signals or recall classifications related to OZEMPIC."
+          }
+        },
+        "citation_claim_support": {
+          "score": 0.5,
+          "reason": "The provided context supports claims regarding dosage recommendations and interactions with insulin but does not provide evidence for safety profiles or recall information.",
+          "valid": true,
+          "raw": {
+            "score": 0.5,
+            "reason": "The provided context supports claims regarding dosage recommendations and interactions with insulin but does not provide evidence for safety profiles or recall information."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.3333333333333333,
+          "reason": "5/15 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 5,
+            "total_sentences": 15
+          }
+        }
+      }
+    },
+    {
+      "question": "What are the FDA boxed warnings for fluoroquinolone antibiotics?",
+      "agent": "fda",
+      "retrieved_context_count": 5,
+      "metrics": {
+        "context_relevance": {
+          "score": 0.0,
+          "reason": "The retrieved contexts do not contain any information relevant to the FDA boxed warnings for fluoroquinolone antibiotics.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "The retrieved contexts do not contain any information relevant to the FDA boxed warnings for fluoroquinolone antibiotics."
+          }
+        },
+        "context_sufficiency": {
+          "score": 0.0,
+          "reason": "The retrieved contexts do not provide any clinically important facts about the FDA boxed warnings for fluoroquinolone antibiotics.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "The retrieved contexts do not provide any clinically important facts about the FDA boxed warnings for fluoroquinolone antibiotics."
+          }
+        },
+        "citation_claim_support": {
+          "score": 0.0,
+          "reason": "There are no factual claims in the candidate answer that contain [N] markers and are supported by at least one retrieved passage.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "There are no factual claims in the candidate answer that contain [N] markers and are supported by at least one retrieved passage."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.0,
+          "reason": "0/19 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 0,
+            "total_sentences": 19
+          }
+        }
+      }
+    },
+    {
+      "question": "What adverse events have been reported for pembrolizumab in FDA labels?",
+      "agent": "fda",
+      "retrieved_context_count": 5,
+      "metrics": {
+        "context_relevance": {
+          "score": 0.2,
+          "reason": "The retrieved contexts provide some information about adverse events, but they are not directly relevant to the specific question asked about FDA labels for pembrolizumab.",
+          "valid": true,
+          "raw": {
+            "score": 0.2,
+            "reason": "The retrieved contexts provide some information about adverse events, but they are not directly relevant to the specific question asked about FDA labels for pembrolizumab."
+          }
+        },
+        "context_sufficiency": {
+          "score": 0.1,
+          "reason": "While the retrieved contexts mention various adverse reactions, they do not specifically address the adverse events reported in the FDA labels as provided in the reference answer.",
+          "valid": true,
+          "raw": {
+            "score": 0.1,
+            "reason": "While the retrieved contexts mention various adverse reactions, they do not specifically address the adverse events reported in the FDA labels as provided in the reference answer."
+          }
+        },
+        "citation_claim_support": {
+          "score": 0.0,
+          "reason": "The candidate answer does not contain any citations or claims that can be supported by the retrieved contexts.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "The candidate answer does not contain any citations or claims that can be supported by the retrieved contexts."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.1875,
+          "reason": "3/16 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 3,
+            "total_sentences": 16
+          }
+        }
+      }
+    },
+    {
+      "question": "What is the FDA-approved use of naloxone nasal spray?",
+      "agent": "fda",
+      "retrieved_context_count": 5,
+      "metrics": {
+        "context_relevance": {
+          "score": 1.0,
+          "reason": "All retrieved contexts directly support the answer to the question, providing detailed information about the FDA-approved use of naloxone nasal spray for emergency treatment of opioid overdose.",
+          "valid": true,
+          "raw": {
+            "score": 1.0,
+            "reason": "All retrieved contexts directly support the answer to the question, providing detailed information about the FDA-approved use of naloxone nasal spray for emergency treatment of opioid overdose."
+          }
+        },
+        "context_sufficiency": {
+          "score": 1.0,
+          "reason": "All retrieved contexts provide clinically important facts that fully support the reference answer, including indications and usage, dosage instructions, and administration procedures.",
+          "valid": true,
+          "raw": {
+            "score": 1.0,
+            "reason": "All retrieved contexts provide clinically important facts that fully support the reference answer, including indications and usage, dosage instructions, and administration procedures."
+          }
+        },
+        "citation_claim_support": {
+          "score": 1.0,
+          "reason": "All factual claims in the candidate answer are supported by at least one of the retrieved passages, ensuring a strong citation claim foundation.",
+          "valid": true,
+          "raw": {
+            "score": 1.0,
+            "reason": "All factual claims in the candidate answer are supported by at least one of the retrieved passages, ensuring a strong citation claim foundation."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.16666666666666666,
+          "reason": "3/18 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 3,
+            "total_sentences": 18
+          }
+        }
+      }
+    },
+    {
+      "question": "What contraindications are listed for metformin in FDA drug labeling?",
+      "agent": "fda",
+      "retrieved_context_count": 5,
+      "metrics": {
+        "context_relevance": {
+          "score": 0.0,
+          "reason": "All retrieved contexts are unrelated to metformin contraindications and do not provide any clinically relevant information.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "All retrieved contexts are unrelated to metformin contraindications and do not provide any clinically relevant information."
+          }
+        },
+        "context_sufficiency": {
+          "score": 0.0,
+          "reason": "No context supports the clinical answer about metformin contraindications as none of the provided contexts mention metformin or its contraindications.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "No context supports the clinical answer about metformin contraindications as none of the provided contexts mention metformin or its contraindications."
+          }
+        },
+        "citation_claim_support": {
+          "score": 0.0,
+          "reason": "There are no factual claims in the candidate answer that contain [N] markers and can be supported by at least one retrieved passage as all retrieved passages are unrelated to metformin or its contraindications.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "There are no factual claims in the candidate answer that contain [N] markers and can be supported by at least one retrieved passage as all retrieved passages are unrelated to metformin or its contraindications."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.0,
+          "reason": "0/18 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 0,
+            "total_sentences": 18
+          }
+        }
+      }
+    },
+    {
+      "question": "What Phase 3 clinical trials are investigating GLP-1 agonists for obesity?",
+      "agent": "clinical_trials",
+      "retrieved_context_count": 5,
+      "metrics": {
+        "context_relevance": {
+          "score": 0.0,
+          "reason": "None of the retrieved contexts directly address Phase 3 clinical trials for GLP-1 agonists in obesity as mentioned in the question.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "None of the retrieved contexts directly address Phase 3 clinical trials for GLP-1 agonists in obesity as mentioned in the question."
+          }
+        },
+        "context_sufficiency": {
+          "score": 0.0,
+          "reason": "The retrieved contexts do not contain any clinically important facts about GLP-1 agonist trials for obesity, thus failing to support the reference answer.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "The retrieved contexts do not contain any clinically important facts about GLP-1 agonist trials for obesity, thus failing to support the reference answer."
+          }
+        },
+        "citation_claim_support": {
+          "score": 0.0,
+          "reason": "There are no factual claims in the candidate answer that can be supported by the retrieved contexts as they do not contain any relevant information about GLP-1 agonist trials for obesity.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "There are no factual claims in the candidate answer that can be supported by the retrieved contexts as they do not contain any relevant information about GLP-1 agonist trials for obesity."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.0,
+          "reason": "0/3 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 0,
+            "total_sentences": 3
+          }
+        }
+      }
+    },
+    {
+      "question": "Are there active trials studying CAR-T therapy for multiple myeloma?",
+      "agent": "clinical_trials",
+      "retrieved_context_count": 5,
+      "metrics": {
+        "context_relevance": {
+          "score": 0.5,
+          "reason": "The retrieved contexts mention studies on BCMA-targeted CAR-T therapy for multiple myeloma, which is relevant to the question.",
+          "valid": true,
+          "raw": {
+            "score": 0.5,
+            "reason": "The retrieved contexts mention studies on BCMA-targeted CAR-T therapy for multiple myeloma, which is relevant to the question."
+          }
+        },
+        "context_sufficiency": {
+          "score": 0.2,
+          "reason": "While some context supports the answer, it does not cover all clinically important facts in the reference answer (e.g., no mention of bispecific antibodies).",
+          "valid": true,
+          "raw": {
+            "score": 0.2,
+            "reason": "While some context supports the answer, it does not cover all clinically important facts in the reference answer (e.g., no mention of bispecific antibodies)."
+          }
+        },
+        "citation_claim_support": {
+          "score": 0.3,
+          "reason": "The retrieved contexts support factual claims about active trials studying CAR-T therapy for multiple myeloma, but do not fully cover all candidate answers.",
+          "valid": true,
+          "raw": {
+            "score": 0.3,
+            "reason": "The retrieved contexts support factual claims about active trials studying CAR-T therapy for multiple myeloma, but do not fully cover all candidate answers."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.75,
+          "reason": "3/4 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 3,
+            "total_sentences": 4
+          }
+        }
+      }
+    },
+    {
+      "question": "What recruiting trials exist for Alzheimer's disease disease-modifying therapies?",
+      "agent": "clinical_trials",
+      "retrieved_context_count": 5,
+      "metrics": {
+        "context_relevance": {
+          "score": 0.2,
+          "reason": "Only one context (NCT01254773) provides information relevant to the question about recruiting trials for Alzheimer's disease disease-modifying therapies, while the other contexts are related to completed or terminated studies.",
+          "valid": true,
+          "raw": {
+            "score": 0.2,
+            "reason": "Only one context (NCT01254773) provides information relevant to the question about recruiting trials for Alzheimer's disease disease-modifying therapies, while the other contexts are related to completed or terminated studies."
+          }
+        },
+        "context_sufficiency": {
+          "score": 0.0,
+          "reason": "None of the retrieved contexts contain clinically important facts that support the reference answer as they all pertain to completed trials and do not provide information about current recruiting trials for disease-modifying therapies.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "None of the retrieved contexts contain clinically important facts that support the reference answer as they all pertain to completed trials and do not provide information about current recruiting trials for disease-modifying therapies."
+          }
+        },
+        "citation_claim_support": {
+          "score": 0.0,
+          "reason": "No factual claims in the candidate answer are supported by any of the retrieved contexts, as all contexts are related to completed or terminated studies.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "No factual claims in the candidate answer are supported by any of the retrieved contexts, as all contexts are related to completed or terminated studies."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.0,
+          "reason": "0/19 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 0,
+            "total_sentences": 19
+          }
+        }
+      }
+    },
+    {
+      "question": "What clinical trials are evaluating mRNA vaccines for influenza?",
+      "agent": "clinical_trials",
+      "retrieved_context_count": 5,
+      "metrics": {
+        "context_relevance": {
+          "score": 0.0,
+          "reason": "None of the retrieved contexts provide information about clinical trials evaluating mRNA vaccines for influenza.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "None of the retrieved contexts provide information about clinical trials evaluating mRNA vaccines for influenza."
+          }
+        },
+        "context_sufficiency": {
+          "score": 0.0,
+          "reason": "The provided contexts do not contain any clinically important facts related to influenza vaccine trials.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "The provided contexts do not contain any clinically important facts related to influenza vaccine trials."
+          }
+        },
+        "citation_claim_support": {
+          "score": 0.0,
+          "reason": "There are no factual claims in the candidate answer that can be supported by the retrieved set of contexts.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "There are no factual claims in the candidate answer that can be supported by the retrieved set of contexts."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.0,
+          "reason": "0/3 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 0,
+            "total_sentences": 3
+          }
+        }
+      }
+    },
+    {
+      "question": "Are there ongoing trials of SGLT2 inhibitors in chronic kidney disease?",
+      "agent": "clinical_trials",
+      "retrieved_context_count": 5,
+      "metrics": {
+        "context_relevance": {
+          "score": 0.2,
+          "reason": "The retrieved contexts provide some information about SGLT2 inhibitors and CKD, but they do not directly answer the question of ongoing trials in this specific context.",
+          "valid": true,
+          "raw": {
+            "score": 0.2,
+            "reason": "The retrieved contexts provide some information about SGLT2 inhibitors and CKD, but they do not directly answer the question of ongoing trials in this specific context."
+          }
+        },
+        "context_sufficiency": {
+          "score": 0.1,
+          "reason": "The reference answer mentions ongoing and completed trials evaluating SGLT2 inhibitors for CKD progression and cardiorenal outcomes beyond diabetes indications, but the retrieved contexts do not provide sufficient information to fully support this claim.",
+          "valid": true,
+          "raw": {
+            "score": 0.1,
+            "reason": "The reference answer mentions ongoing and completed trials evaluating SGLT2 inhibitors for CKD progression and cardiorenal outcomes beyond diabetes indications, but the retrieved contexts do not provide sufficient information to fully support this claim."
+          }
+        },
+        "citation_claim_support": {
+          "score": 0.1,
+          "reason": "The candidate answer mentions a specific trial (NCT07188545) as ongoing and involving SGLT2 inhibitors, but the retrieved contexts do not provide enough information to support this claim.",
+          "valid": true,
+          "raw": {
+            "score": 0.1,
+            "reason": "The candidate answer mentions a specific trial (NCT07188545) as ongoing and involving SGLT2 inhibitors, but the retrieved contexts do not provide enough information to support this claim."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.2,
+          "reason": "4/20 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 4,
+            "total_sentences": 20
+          }
+        }
+      }
+    },
+    {
+      "question": "What is the recommended blood pressure target for adults with hypertension in this guideline excerpt?",
+      "agent": "local",
+      "retrieved_context_count": 2,
+      "metrics": {
+        "context_relevance": {
+          "score": 1.0,
+          "reason": "The retrieved context directly supports the answer by providing the exact blood pressure target (less than 130/80 mmHg) for adults with hypertension.",
+          "valid": true,
+          "raw": {
+            "score": 1.0,
+            "reason": "The retrieved context directly supports the answer by providing the exact blood pressure target (less than 130/80 mmHg) for adults with hypertension."
+          }
+        },
+        "context_sufficiency": {
+          "score": 1.0,
+          "reason": "All clinically important facts in the reference answer are supported by at least one of the retrieved contexts.",
+          "valid": true,
+          "raw": {
+            "score": 1.0,
+            "reason": "All clinically important facts in the reference answer are supported by at least one of the retrieved contexts."
+          }
+        },
+        "citation_claim_support": {
+          "score": 1.0,
+          "reason": "[N] markers are used to cite the source (Hypertension Guideline Excerpt [1]) and this is directly supported by CONTEXT 1 which mentions the guideline.",
+          "valid": true,
+          "raw": {
+            "score": 1.0,
+            "reason": "[N] markers are used to cite the source (Hypertension Guideline Excerpt [1]) and this is directly supported by CONTEXT 1 which mentions the guideline."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 1.0,
+          "reason": "1/1 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 1,
+            "total_sentences": 1
+          }
+        }
+      }
+    },
+    {
+      "question": "What fasting glucose threshold defines diabetes in this institutional protocol?",
+      "agent": "local",
+      "retrieved_context_count": 1,
+      "metrics": {
+        "context_relevance": {
+          "score": 1.0,
+          "reason": "All retrieved contexts are directly relevant to the question as they mention a fasting plasma glucose threshold of 126 mg/dL for diagnosing diabetes.",
+          "valid": true,
+          "raw": {
+            "score": 1.0,
+            "reason": "All retrieved contexts are directly relevant to the question as they mention a fasting plasma glucose threshold of 126 mg/dL for diagnosing diabetes."
+          }
+        },
+        "context_sufficiency": {
+          "score": 1.0,
+          "reason": "The reference answer is fully supported by the retrieved context, which states that fasting plasma glucose of 126 mg/dL or higher defines diabetes.",
+          "valid": true,
+          "raw": {
+            "score": 1.0,
+            "reason": "The reference answer is fully supported by the retrieved context, which states that fasting plasma glucose of 126 mg/dL or higher defines diabetes."
+          }
+        },
+        "citation_claim_support": {
+          "score": 1.0,
+          "reason": "The candidate answer contains a citation [1] for the claim 'fasting glucose threshold that defines diabetes in this institutional protocol is **126 mg/dL**', which is directly supported by CONTEXT 1.",
+          "valid": true,
+          "raw": {
+            "score": 1.0,
+            "reason": "The candidate answer contains a citation [1] for the claim 'fasting glucose threshold that defines diabetes in this institutional protocol is **126 mg/dL**', which is directly supported by CONTEXT 1."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 1.0,
+          "reason": "1/1 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 1,
+            "total_sentences": 1
+          }
+        }
+      }
+    },
+    {
+      "question": "What prophylactic antibiotic is recommended before dental procedures for patients with prosthetic joints per this memo?",
+      "agent": "local",
+      "retrieved_context_count": 1,
+      "metrics": {
+        "context_relevance": {
+          "score": 0.0,
+          "reason": "The retrieved context does not provide any information that directly answers the question about which prophylactic antibiotic is recommended before dental procedures for patients with prosthetic joints.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "The retrieved context does not provide any information that directly answers the question about which prophylactic antibiotic is recommended before dental procedures for patients with prosthetic joints."
+          }
+        },
+        "context_sufficiency": {
+          "score": 0.0,
+          "reason": "None of the retrieved contexts contain clinically important facts related to the recommendation of a specific prophylactic antibiotic for patients with prosthetic joints and undergoing dental procedures.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "None of the retrieved contexts contain clinically important facts related to the recommendation of a specific prophylactic antibiotic for patients with prosthetic joints and undergoing dental procedures."
+          }
+        },
+        "citation_claim_support": {
+          "score": 0.0,
+          "reason": "The candidate answer does not mention any factual claims that are supported by at least one retrieved passage, as it only states the general recommendation against routine prophylaxis without specifying a particular antibiotic or mentioning any specific claim.",
+          "valid": true,
+          "raw": {
+            "score": 0.0,
+            "reason": "The candidate answer does not mention any factual claims that are supported by at least one retrieved passage, as it only states the general recommendation against routine prophylaxis without specifying a particular antibiotic or mentioning any specific claim."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.5,
+          "reason": "1/2 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 1,
+            "total_sentences": 2
+          }
+        }
+      }
+    },
+    {
+      "question": "What creatinine clearance cutoff requires dose adjustment for enoxaparin in this formulary note?",
+      "agent": "local",
+      "retrieved_context_count": 1,
+      "metrics": {
+        "context_relevance": {
+          "score": 1.0,
+          "reason": "The retrieved context directly supports the answer, as it mentions a dose adjustment is required when creatinine clearance is below 30 mL/min.",
+          "valid": true,
+          "raw": {
+            "score": 1.0,
+            "reason": "The retrieved context directly supports the answer, as it mentions a dose adjustment is required when creatinine clearance is below 30 mL/min."
+          }
+        },
+        "context_sufficiency": {
+          "score": 1.0,
+          "reason": "All clinically important facts in the reference answer are supported by the retrieved contexts.",
+          "valid": true,
+          "raw": {
+            "score": 1.0,
+            "reason": "All clinically important facts in the reference answer are supported by the retrieved contexts."
+          }
+        },
+        "citation_claim_support": {
+          "score": 1.0,
+          "reason": "The candidate answer contains a citation [1] that supports the factual claim about dose adjustment for enoxaparin based on creatinine clearance below 30 mL/min, which is supported by the retrieved context.",
+          "valid": true,
+          "raw": {
+            "score": 1.0,
+            "reason": "The candidate answer contains a citation [1] that supports the factual claim about dose adjustment for enoxaparin based on creatinine clearance below 30 mL/min, which is supported by the retrieved context."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.5,
+          "reason": "1/2 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 1,
+            "total_sentences": 2
+          }
+        }
+      }
+    },
+    {
+      "question": "What is the institutional policy on contact precautions duration for C. difficile infection?",
+      "agent": "local",
+      "retrieved_context_count": 1,
+      "metrics": {
+        "context_relevance": {
+          "score": 1.0,
+          "reason": "All retrieved passages directly support the key information in the question and reference answer.",
+          "valid": true,
+          "raw": {
+            "score": 1.0,
+            "reason": "All retrieved passages directly support the key information in the question and reference answer."
+          }
+        },
+        "context_sufficiency": {
+          "score": 1.0,
+          "reason": "Both retrieved contexts provide all clinically important facts from the reference answer.",
+          "valid": true,
+          "raw": {
+            "score": 1.0,
+            "reason": "Both retrieved contexts provide all clinically important facts from the reference answer."
+          }
+        },
+        "citation_claim_support": {
+          "score": 1.0,
+          "reason": "[N] markers are used correctly and supported by at least one of the retrieved passages.",
+          "valid": true,
+          "raw": {
+            "score": 1.0,
+            "reason": "[N] markers are used correctly and supported by at least one of the retrieved passages."
+          }
+        },
+        "sentence_citation_coverage": {
+          "score": 0.3333333333333333,
+          "reason": "1/3 factual sentences contain valid citations.",
+          "valid": true,
+          "raw": {
+            "cited_sentences": 1,
+            "total_sentences": 3
+          }
+        }
+      }
+    }
+  ]
+}

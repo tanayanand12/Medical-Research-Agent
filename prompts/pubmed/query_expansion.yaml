@@ -1,0 +1,25 @@
+name: PubMed Query Expansion
+version: 1.0.0
+domain: pubmed
+description: >
+  Expand a user query into PubMed-optimised search terms.
+  Generate MeSH headings, synonyms, and Boolean search strings.
+
+template: |
+  You are a biomedical search specialist.  Given the user query below,
+  generate an expanded PubMed search strategy.
+
+  INSTRUCTIONS:
+  - Identify 3-5 MeSH headings relevant to the query.
+  - List synonyms and alternative terms for key concepts.
+  - Produce a Boolean search string combining terms with AND/OR.
+  - Include relevant subheadings (e.g. /therapy, /diagnosis).
+  - Keep the expansion focused — avoid overly broad terms.
+
+  USER QUERY:
+  {query}
+
+  EXPANDED SEARCH:
+
+variables:
+  - query

@@ -1,0 +1,413 @@
+{
+  "generated_at": "2026-07-24T17:29:39.763002+00:00",
+  "benchmark": "eval\\data\\routing_holdout.json",
+  "embedding_model": "ollama/nomic-embed-text",
+  "summary": {
+    "n": 20,
+    "top1_accuracy": 0.85,
+    "top3_accuracy": 1.0,
+    "mean_reciprocal_rank": 0.9083
+  },
+  "results": [
+    {
+      "id": "r_pubmed_01",
+      "question": "Summarize peer-reviewed findings on GLP-1 receptor agonists and cardiovascular outcomes.",
+      "expected": "search_pubmed",
+      "ranked": [
+        "search_pubmed",
+        "search_pubmed_deep",
+        "search_clinical_trials",
+        "search_fda",
+        "search_local_index"
+      ],
+      "scores": [
+        0.7561,
+        0.5396,
+        0.5242,
+        0.3561,
+        0.3395
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_pubmed_02",
+      "question": "What do cohort studies report about long-COVID cognitive symptoms?",
+      "expected": "search_pubmed",
+      "ranked": [
+        "search_pubmed_deep",
+        "search_pubmed",
+        "search_clinical_trials",
+        "search_local_index",
+        "search_fda"
+      ],
+      "scores": [
+        0.5001,
+        0.4861,
+        0.2502,
+        0.2036,
+        0.1895
+      ],
+      "expected_rank": 2
+    },
+    {
+      "id": "r_pubmed_03",
+      "question": "Which meta-analyses compare DOACs with warfarin for atrial fibrillation?",
+      "expected": "search_pubmed",
+      "ranked": [
+        "search_clinical_trials",
+        "search_pubmed_deep",
+        "search_pubmed",
+        "search_fda",
+        "search_local_index"
+      ],
+      "scores": [
+        0.5043,
+        0.4383,
+        0.4378,
+        0.2133,
+        0.1962
+      ],
+      "expected_rank": 3
+    },
+    {
+      "id": "r_pubmed_04",
+      "question": "Review published literature on microbiome changes in inflammatory bowel disease.",
+      "expected": "search_pubmed",
+      "ranked": [
+        "search_pubmed",
+        "search_pubmed_deep",
+        "search_local_index",
+        "search_fda",
+        "search_clinical_trials"
+      ],
+      "scores": [
+        0.655,
+        0.4139,
+        0.2951,
+        0.1993,
+        0.1894
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_pubmed_05",
+      "question": "How effective is pulmonary rehabilitation after COPD exacerbation?",
+      "expected": "search_pubmed",
+      "ranked": [
+        "search_pubmed_deep",
+        "search_local_index",
+        "search_pubmed",
+        "search_fda",
+        "search_clinical_trials"
+      ],
+      "scores": [
+        0.2419,
+        0.2346,
+        0.2231,
+        0.2087,
+        0.1656
+      ],
+      "expected_rank": 3
+    },
+    {
+      "id": "r_fda_01",
+      "question": "What does the FDA label say about tirzepatide contraindications?",
+      "expected": "search_fda",
+      "ranked": [
+        "search_fda",
+        "search_clinical_trials",
+        "search_local_index",
+        "search_pubmed",
+        "search_pubmed_deep"
+      ],
+      "scores": [
+        0.668,
+        0.2796,
+        0.2119,
+        0.2042,
+        0.1792
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_fda_02",
+      "question": "Has FDA issued a boxed warning for tofacitinib?",
+      "expected": "search_fda",
+      "ranked": [
+        "search_fda",
+        "search_clinical_trials",
+        "search_pubmed",
+        "search_pubmed_deep",
+        "search_local_index"
+      ],
+      "scores": [
+        0.6277,
+        0.2001,
+        0.1998,
+        0.191,
+        0.182
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_fda_03",
+      "question": "Which indications for dupilumab are approved in the United States?",
+      "expected": "search_fda",
+      "ranked": [
+        "search_fda",
+        "search_local_index",
+        "search_pubmed",
+        "search_pubmed_deep",
+        "search_clinical_trials"
+      ],
+      "scores": [
+        0.3253,
+        0.2975,
+        0.296,
+        0.2763,
+        0.2412
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_fda_04",
+      "question": "Find openFDA adverse-event reports involving amiodarone.",
+      "expected": "search_fda",
+      "ranked": [
+        "search_fda",
+        "search_pubmed",
+        "search_clinical_trials",
+        "search_local_index",
+        "search_pubmed_deep"
+      ],
+      "scores": [
+        0.5941,
+        0.2444,
+        0.2102,
+        0.201,
+        0.1944
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_fda_05",
+      "question": "Was this insulin product subject to an FDA recall?",
+      "expected": "search_fda",
+      "ranked": [
+        "search_fda",
+        "search_clinical_trials",
+        "search_pubmed",
+        "search_pubmed_deep",
+        "search_local_index"
+      ],
+      "scores": [
+        0.5583,
+        0.2798,
+        0.2733,
+        0.2622,
+        0.1884
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_ct_01",
+      "question": "Which recruiting clinical trials test psilocybin for major depression?",
+      "expected": "search_clinical_trials",
+      "ranked": [
+        "search_clinical_trials",
+        "search_pubmed",
+        "search_pubmed_deep",
+        "search_fda",
+        "search_local_index"
+      ],
+      "scores": [
+        0.6269,
+        0.2547,
+        0.2257,
+        0.2037,
+        0.1905
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_ct_02",
+      "question": "List phase 3 trials of RSV vaccines in older adults.",
+      "expected": "search_clinical_trials",
+      "ranked": [
+        "search_clinical_trials",
+        "search_pubmed_deep",
+        "search_local_index",
+        "search_fda",
+        "search_pubmed"
+      ],
+      "scores": [
+        0.5605,
+        0.1929,
+        0.1855,
+        0.1842,
+        0.1837
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_ct_03",
+      "question": "Are any NCT studies enrolling for gene therapy in sickle cell disease?",
+      "expected": "search_clinical_trials",
+      "ranked": [
+        "search_clinical_trials",
+        "search_pubmed",
+        "search_pubmed_deep",
+        "search_local_index",
+        "search_fda"
+      ],
+      "scores": [
+        0.4955,
+        0.4843,
+        0.4707,
+        0.2695,
+        0.2662
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_ct_04",
+      "question": "What are the endpoints of ongoing trials for Alzheimer's monoclonal antibodies?",
+      "expected": "search_clinical_trials",
+      "ranked": [
+        "search_clinical_trials",
+        "search_pubmed_deep",
+        "search_pubmed",
+        "search_fda",
+        "search_local_index"
+      ],
+      "scores": [
+        0.5263,
+        0.3406,
+        0.3291,
+        0.2092,
+        0.1959
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_ct_05",
+      "question": "Find interventional studies of digital therapeutics for insomnia.",
+      "expected": "search_clinical_trials",
+      "ranked": [
+        "search_clinical_trials",
+        "search_pubmed",
+        "search_pubmed_deep",
+        "search_local_index",
+        "search_fda"
+      ],
+      "scores": [
+        0.6797,
+        0.4253,
+        0.3106,
+        0.2763,
+        0.2367
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_local_01",
+      "question": "According to our hospital policy, when should a rapid response be activated?",
+      "expected": "search_local_index",
+      "ranked": [
+        "search_local_index",
+        "search_pubmed",
+        "search_pubmed_deep",
+        "search_clinical_trials",
+        "search_fda"
+      ],
+      "scores": [
+        0.5561,
+        0.2557,
+        0.2505,
+        0.2059,
+        0.202
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_local_02",
+      "question": "What dose limit appears in this uploaded pharmacy memo?",
+      "expected": "search_local_index",
+      "ranked": [
+        "search_local_index",
+        "search_fda",
+        "search_clinical_trials",
+        "search_pubmed",
+        "search_pubmed_deep"
+      ],
+      "scores": [
+        0.7417,
+        0.5385,
+        0.4683,
+        0.4634,
+        0.4548
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_local_03",
+      "question": "Search the institutional formulary for restricted antibiotics.",
+      "expected": "search_local_index",
+      "ranked": [
+        "search_local_index",
+        "search_fda",
+        "search_clinical_trials",
+        "search_pubmed",
+        "search_pubmed_deep"
+      ],
+      "scores": [
+        1.0,
+        0.6474,
+        0.5718,
+        0.5663,
+        0.4698
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_local_04",
+      "question": "What does this internal protocol require before MRI contrast administration?",
+      "expected": "search_local_index",
+      "ranked": [
+        "search_local_index",
+        "search_pubmed_deep",
+        "search_pubmed",
+        "search_clinical_trials",
+        "search_fda"
+      ],
+      "scores": [
+        0.6262,
+        0.4509,
+        0.4487,
+        0.3431,
+        0.2461
+      ],
+      "expected_rank": 1
+    },
+    {
+      "id": "r_local_05",
+      "question": "Retrieve the recommendation from this local guideline excerpt.",
+      "expected": "search_local_index",
+      "ranked": [
+        "search_local_index",
+        "search_pubmed",
+        "search_pubmed_deep",
+        "search_clinical_trials",
+        "search_fda"
+      ],
+      "scores": [
+        0.5937,
+        0.4117,
+        0.2564,
+        0.201,
+        0.1941
+      ],
+      "expected_rank": 1
+    }
+  ]
+}

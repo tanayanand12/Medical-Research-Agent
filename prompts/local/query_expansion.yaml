@@ -1,0 +1,26 @@
+name: Local Index Query Expansion
+version: 1.0.0
+domain: local
+description: >
+  Expand a user query into terms optimised for local vector index search.
+  Generate synonyms and related concepts to improve recall.
+
+template: |
+  You are a medical search assistant.  Given the user query below,
+  generate expanded search terms optimised for semantic vector search
+  over a local medical document index.
+
+  INSTRUCTIONS:
+  - Rephrase the query in 2-3 alternative ways.
+  - List medical synonyms for key terms.
+  - Include both lay and technical terminology.
+  - Add related concepts that may appear in relevant documents.
+  - Keep expansions focused — avoid drifting from the core question.
+
+  USER QUERY:
+  {query}
+
+  EXPANDED TERMS:
+
+variables:
+  - query

@@ -1,0 +1,34 @@
+name: FDA Database Search
+version: 1.0.0
+tool_name: search_fda
+description: >
+  Search FDA databases for drug approvals, safety alerts, adverse events,
+  medication labeling, regulatory decisions, pharmaceutical recalls,
+  and post-market surveillance data.
+domains:
+  - pharmacology
+  - drug_safety
+  - regulatory
+  - pharmacovigilance
+triggers:
+  keywords:
+    - fda
+    - drug approval
+    - safety
+    - adverse event
+    - recall
+    - label
+    - regulation
+    - pharmaceutical
+    - medication
+    - side effect
+    - warning
+    - contraindication
+    - dosage
+    - formulation
+    - approved
+  semantic_similarity_threshold: 0.6
+cost_estimates:
+  avg_tokens_input: 150
+  avg_tokens_output: 600
+  retrieval_time_sec: 2.5

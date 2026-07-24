@@ -1,0 +1,42 @@
+name: Local Index Search
+version: 1.0.0
+tool_name: search_local_index
+description: >
+  Search a governed local or institutional document index for private
+  protocols, hospital policies, formulary notes, uploaded records,
+  internal guidelines, and curated organization-specific evidence.
+domains:
+  - general
+  - pharmacology
+triggers:
+  priority_keywords:
+    - institutional
+    - internal
+    - hospital policy
+    - protocol
+    - formulary
+    - memo
+    - this guideline
+    - this policy
+    - this excerpt
+    - uploaded document
+  keywords:
+    - local
+    - institutional
+    - internal
+    - hospital policy
+    - protocol
+    - formulary
+    - memo
+    - uploaded document
+    - private index
+    - this guideline
+    - this policy
+    - this excerpt
+    - our policy
+    - organization-specific
+  semantic_similarity_threshold: 0.6
+cost_estimates:
+  avg_tokens_input: 100
+  avg_tokens_output: 500
+  retrieval_time_sec: 2.0
