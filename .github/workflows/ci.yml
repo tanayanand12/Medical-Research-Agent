@@ -45,7 +45,22 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
+          load: true
           push: false
           tags: medical-research-agent:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Smoke test container health
+        run: |
+          docker run --detach --name mra-ci --publish 8000:8000 medical-research-agent:ci
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8000/health > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs mra-ci
+          exit 1
+      - name: Clean up smoke test container
+        if: always()
+        run: docker rm --force mra-ci > /dev/null 2>&1 || true
