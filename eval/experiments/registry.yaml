@@ -1,0 +1,772 @@
+experiments:
+- run_id: ca4a1c45
+  timestamp: '2026-07-24T05:36:30.393832+00:00'
+  dataset: custom
+  models:
+  - gemini/gemma-4-26b-a4b-it
+  agents:
+  - local
+  n_samples: 20
+  summary:
+    faithfulness: 0.2
+    answer_relevancy: 1.0
+    citation_fidelity: 1.0
+    hallucination_rate: 0.4
+- run_id: 76f0ef63
+  timestamp: '2026-07-24T06:35:56.621514+00:00'
+  dataset: custom
+  models:
+  - gemini/gemma-4-26b-a4b-it
+  agents:
+  - pubmed
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.0
+      answer_relevancy: 0.0
+      citation_fidelity: 0.5
+      hallucination_rate: 0.0
+    valid_counts:
+      faithfulness: 0
+      answer_relevancy: 1
+      citation_fidelity: 4
+      hallucination_rate: 0
+    sample_count: 5
+    error_count: 2
+- run_id: b3d8d09e
+  timestamp: '2026-07-24T07:05:15.025635+00:00'
+  dataset: custom
+  models:
+  - gemini/gemma-4-26b-a4b-it
+  agents:
+  - pubmed
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.6
+      answer_relevancy: 0.16
+      citation_fidelity: 0.8
+      hallucination_rate: 0.0
+    ci95:
+      faithfulness:
+      - 0.26
+      - 0.92
+      answer_relevancy:
+      - 0.0
+      - 0.36
+      citation_fidelity:
+      - 0.4
+      - 1.0
+      hallucination_rate:
+      - 0.0
+      - 0.0
+    valid_counts:
+      faithfulness: 5
+      answer_relevancy: 5
+      citation_fidelity: 5
+      hallucination_rate: 5
+    sample_count: 5
+    error_count: 0
+    latency_sec:
+      mean: 78.64
+      median: 82.293
+      p95: 96.035
+- run_id: c4cc98a0
+  timestamp: '2026-07-24T07:12:13.253763+00:00'
+  dataset: custom
+  models:
+  - gemini/gemma-4-26b-a4b-it
+  agents:
+  - fda
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.0
+      answer_relevancy: 0.0
+      citation_fidelity: 0.0
+      hallucination_rate: 0.0
+    ci95:
+      faithfulness:
+      - 0.0
+      - 0.0
+      answer_relevancy:
+      - 0.0
+      - 0.0
+      citation_fidelity:
+      - 0.0
+      - 0.0
+      hallucination_rate:
+      - 0.0
+      - 0.0
+    valid_counts:
+      faithfulness: 0
+      answer_relevancy: 4
+      citation_fidelity: 5
+      hallucination_rate: 0
+    sample_count: 5
+    error_count: 5
+    latency_sec:
+      mean: 58.22
+      median: 49.072
+      p95: 87.522
+- run_id: 9a635a06
+  timestamp: '2026-07-24T07:17:22.919449+00:00'
+  dataset: custom
+  models:
+  - gemini/gemini-2.5-flash-lite
+  agents:
+  - pubmed
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.3333
+      answer_relevancy: 0.15
+      citation_fidelity: 0.3333
+      hallucination_rate: 0.6667
+    ci95:
+      faithfulness:
+      - 0.0
+      - 1.0
+      answer_relevancy:
+      - 0.0
+      - 0.45
+      citation_fidelity:
+      - 0.0
+      - 1.0
+      hallucination_rate:
+      - 0.0
+      - 1.0
+    valid_counts:
+      faithfulness: 3
+      answer_relevancy: 3
+      citation_fidelity: 3
+      hallucination_rate: 3
+    sample_count: 5
+    error_count: 4
+    latency_sec:
+      mean: 21.661
+      median: 18.273
+      p95: 38.801
+- run_id: c738c41b
+  timestamp: '2026-07-24T07:17:11.535385+00:00'
+  dataset: custom
+  models:
+  - gemini/gemma-4-26b-a4b-it
+  agents:
+  - clinical_trials
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.0
+      answer_relevancy: 0.0
+      citation_fidelity: 0.4
+      hallucination_rate: 0.0
+    ci95:
+      faithfulness:
+      - 0.0
+      - 0.0
+      answer_relevancy:
+      - 0.0
+      - 0.0
+      citation_fidelity:
+      - 0.0
+      - 0.8
+      hallucination_rate:
+      - 0.0
+      - 0.0
+    valid_counts:
+      faithfulness: 1
+      answer_relevancy: 0
+      citation_fidelity: 5
+      hallucination_rate: 0
+    sample_count: 5
+    error_count: 0
+    latency_sec:
+      mean: 59.833
+      median: 56.885
+      p95: 68.391
+- run_id: 333451d4
+  timestamp: '2026-07-24T07:22:15.842167+00:00'
+  dataset: custom
+  models:
+  - gemini/gemma-4-26b-a4b-it
+  agents:
+  - local
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.0
+      answer_relevancy: 0.0
+      citation_fidelity: 1.0
+      hallucination_rate: 0.0
+    ci95:
+      faithfulness:
+      - 0.0
+      - 0.0
+      answer_relevancy:
+      - 0.0
+      - 0.0
+      citation_fidelity:
+      - 1.0
+      - 1.0
+      hallucination_rate:
+      - 0.0
+      - 0.0
+    valid_counts:
+      faithfulness: 0
+      answer_relevancy: 0
+      citation_fidelity: 5
+      hallucination_rate: 0
+    sample_count: 5
+    error_count: 0
+    latency_sec:
+      mean: 23.248
+      median: 21.739
+      p95: 27.388
+- run_id: 85a66595
+  timestamp: '2026-07-24T07:19:57.440868+00:00'
+  dataset: custom
+  models:
+  - gemini/gemini-2.5-flash-lite
+  agents:
+  - fda
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.0
+      answer_relevancy: 0.0
+      citation_fidelity: 0.0
+      hallucination_rate: 1.0
+    ci95:
+      faithfulness:
+      - 0.0
+      - 0.0
+      answer_relevancy:
+      - 0.0
+      - 0.0
+      citation_fidelity:
+      - 0.0
+      - 0.0
+      hallucination_rate:
+      - 1.0
+      - 1.0
+    valid_counts:
+      faithfulness: 3
+      answer_relevancy: 4
+      citation_fidelity: 5
+      hallucination_rate: 2
+    sample_count: 5
+    error_count: 5
+    latency_sec:
+      mean: 68.026
+      median: 61.204
+      p95: 95.366
+- run_id: d79b4c00
+  timestamp: '2026-07-24T07:26:06.045971+00:00'
+  dataset: custom
+  models:
+  - gemini/gemini-2.5-flash-lite
+  agents:
+  - clinical_trials
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.0
+      answer_relevancy: 0.05
+      citation_fidelity: 0.0
+      hallucination_rate: 0.0
+    ci95:
+      faithfulness:
+      - 0.0
+      - 0.0
+      answer_relevancy:
+      - 0.0
+      - 0.1
+      citation_fidelity:
+      - 0.0
+      - 0.0
+      hallucination_rate:
+      - 0.0
+      - 0.0
+    valid_counts:
+      faithfulness: 0
+      answer_relevancy: 2
+      citation_fidelity: 5
+      hallucination_rate: 0
+    sample_count: 5
+    error_count: 5
+    latency_sec:
+      mean: 14.879
+      median: 17.382
+      p95: 21.292
+- run_id: f49d0e29
+  timestamp: '2026-07-24T07:27:29.635950+00:00'
+  dataset: custom
+  models:
+  - gemini/gemini-2.5-flash-lite
+  agents:
+  - local
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.0
+      answer_relevancy: 0.0
+      citation_fidelity: 0.0
+      hallucination_rate: 1.0
+    ci95:
+      faithfulness:
+      - 0.0
+      - 0.0
+      answer_relevancy:
+      - 0.0
+      - 0.0
+      citation_fidelity:
+      - 0.0
+      - 0.0
+      hallucination_rate:
+      - 1.0
+      - 1.0
+    valid_counts:
+      faithfulness: 0
+      answer_relevancy: 0
+      citation_fidelity: 5
+      hallucination_rate: 1
+    sample_count: 5
+    error_count: 5
+    latency_sec:
+      mean: 2.939
+      median: 2.187
+      p95: 5.896
+- run_id: 9f47c17b
+  timestamp: '2026-07-24T05:42:02.889255+00:00'
+  dataset: custom
+  models:
+  - gemini/gemma-4-26b-a4b-it
+  agents:
+  - fda
+  n_samples: 20
+  summary:
+    faithfulness: 0.0
+    answer_relevancy: 0.0
+    citation_fidelity: 1.0
+    hallucination_rate: 0.0
+- run_id: f85abce3
+  timestamp: '2026-07-24T07:33:37.858446+00:00'
+  dataset: custom
+  models:
+  - gemini/gemma-4-26b-a4b-it
+  agents:
+  - clinical_trials
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.8
+      answer_relevancy: 0.08
+      answer_correctness: 0.02
+      citation_fidelity: 0.4
+      hallucination_rate: 0.0
+    ci95:
+      faithfulness:
+      - 0.4
+      - 1.0
+      answer_relevancy:
+      - 0.02
+      - 0.14
+      answer_correctness:
+      - 0.0
+      - 0.06
+      citation_fidelity:
+      - 0.0
+      - 0.8
+      hallucination_rate:
+      - 0.0
+      - 0.0
+    valid_counts:
+      faithfulness: 5
+      answer_relevancy: 5
+      answer_correctness: 5
+      citation_fidelity: 5
+      hallucination_rate: 3
+    sample_count: 5
+    error_count: 0
+    latency_sec:
+      mean: 201.565
+      median: 185.446
+      p95: 260.993
+- run_id: ac57b2cb
+  timestamp: '2026-07-24T06:11:22.239416+00:00'
+  dataset: custom
+  models:
+  - gemini/gemma-4-26b-a4b-it
+  agents:
+  - fda
+  n_samples: 20
+  summary:
+    faithfulness: 0.0
+    answer_relevancy: 0.0
+    citation_fidelity: 1.0
+    hallucination_rate: 0.0
+- run_id: 6db914e6
+  timestamp: '2026-07-24T07:57:43.898513+00:00'
+  dataset: custom
+  models:
+  - gemini/gemma-4-26b-a4b-it
+  agents:
+  - pubmed
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.725
+      answer_relevancy: 0.125
+      answer_correctness: 0.04
+      citation_fidelity: 0.6
+      hallucination_rate: 0.5
+    ci95:
+      faithfulness:
+      - 0.25
+      - 1.0
+      answer_relevancy:
+      - 0.0
+      - 0.25
+      answer_correctness:
+      - 0.0
+      - 0.12
+      citation_fidelity:
+      - 0.2
+      - 1.0
+      hallucination_rate:
+      - 0.0
+      - 1.0
+    valid_counts:
+      faithfulness: 4
+      answer_relevancy: 4
+      answer_correctness: 5
+      citation_fidelity: 5
+      hallucination_rate: 2
+    sample_count: 5
+    error_count: 1
+    latency_sec:
+      mean: 183.589
+      median: 157.439
+      p95: 278.319
+- run_id: e0edcf84
+  timestamp: '2026-07-24T06:48:47.657087+00:00'
+  dataset: custom
+  models:
+  - gemini/gemma-4-26b-a4b-it
+  agents:
+  - fda
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 1.0
+      answer_relevancy: 0.0
+      citation_fidelity: 0.6
+      hallucination_rate: 0.0
+    valid_counts:
+      faithfulness: 1
+      answer_relevancy: 1
+      citation_fidelity: 5
+      hallucination_rate: 0
+    sample_count: 5
+    error_count: 0
+- run_id: 71c9865a
+  timestamp: '2026-07-24T08:58:37.805973+00:00'
+  dataset: custom
+  models:
+  - gemini/gemma-4-26b-a4b-it
+  agents:
+  - clinical_trials
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.3333
+      answer_relevancy: 0.0
+      citation_fidelity: 0.2
+      hallucination_rate: 0.0
+    valid_counts:
+      faithfulness: 3
+      answer_relevancy: 3
+      citation_fidelity: 5
+      hallucination_rate: 0
+    sample_count: 5
+    error_count: 2
+- run_id: 0d78aac2
+  timestamp: '2026-07-24T09:19:25.284478+00:00'
+  dataset: custom
+  models:
+  - gemini/gemma-4-26b-a4b-it
+  agents:
+  - local
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.6667
+      answer_relevancy: 0.8
+      citation_fidelity: 0.8
+      hallucination_rate: 0.0
+    valid_counts:
+      faithfulness: 3
+      answer_relevancy: 5
+      citation_fidelity: 5
+      hallucination_rate: 1
+    sample_count: 5
+    error_count: 1
+- run_id: 53eb185d
+  timestamp: '2026-07-24T16:15:22.839904+00:00'
+  dataset: custom
+  models:
+  - ollama/qwen2.5-coder:7b
+  agents:
+  - pubmed
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.76
+      answer_relevancy: 0.34
+      answer_correctness: 0.42
+      citation_fidelity: 1.0
+      hallucination_rate: 0.46
+    ci95:
+      faithfulness:
+      - 0.36
+      - 1.0
+      answer_relevancy:
+      - 0.0
+      - 0.74
+      answer_correctness:
+      - 0.1
+      - 0.74
+      citation_fidelity:
+      - 1.0
+      - 1.0
+      hallucination_rate:
+      - 0.06
+      - 0.86
+    valid_counts:
+      faithfulness: 5
+      answer_relevancy: 5
+      answer_correctness: 5
+      citation_fidelity: 5
+      hallucination_rate: 5
+    sample_count: 5
+    error_count: 0
+    latency_sec:
+      mean: 143.33
+      median: 137.576
+      p95: 175.07
+- run_id: ec706b35
+  timestamp: '2026-07-24T16:28:57.513421+00:00'
+  dataset: custom
+  models:
+  - ollama/qwen2.5-coder:7b
+  agents:
+  - fda
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.56
+      answer_relevancy: 0.39
+      answer_correctness: 0.57
+      citation_fidelity: 0.6
+      hallucination_rate: 0.43
+    ci95:
+      faithfulness:
+      - 0.16
+      - 0.96
+      answer_relevancy:
+      - 0.0
+      - 0.79
+      answer_correctness:
+      - 0.17
+      - 0.97
+      citation_fidelity:
+      - 0.2
+      - 1.0
+      hallucination_rate:
+      - 0.03
+      - 0.83
+    valid_counts:
+      faithfulness: 5
+      answer_relevancy: 5
+      answer_correctness: 5
+      citation_fidelity: 5
+      hallucination_rate: 5
+    sample_count: 5
+    error_count: 0
+    latency_sec:
+      mean: 168.365
+      median: 173.751
+      p95: 196.883
+- run_id: 070d14f7
+  timestamp: '2026-07-24T16:44:52.585906+00:00'
+  dataset: custom
+  models:
+  - ollama/qwen2.5-coder:7b
+  agents:
+  - clinical_trials
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.8
+      answer_relevancy: 0.4
+      answer_correctness: 0.6
+      citation_fidelity: 0.4
+      hallucination_rate: 0.2
+    ci95:
+      faithfulness:
+      - 0.4
+      - 1.0
+      answer_relevancy:
+      - 0.1
+      - 0.7
+      answer_correctness:
+      - 0.2
+      - 1.0
+      citation_fidelity:
+      - 0.0
+      - 0.8
+      hallucination_rate:
+      - 0.0
+      - 0.6
+    valid_counts:
+      faithfulness: 5
+      answer_relevancy: 5
+      answer_correctness: 5
+      citation_fidelity: 5
+      hallucination_rate: 5
+    sample_count: 5
+    error_count: 0
+    latency_sec:
+      mean: 172.816
+      median: 139.693
+      p95: 245.058
+- run_id: 1a12d35e
+  timestamp: '2026-07-24T17:01:09.148182+00:00'
+  dataset: custom
+  models:
+  - ollama/qwen2.5-coder:7b
+  agents:
+  - local
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 1.0
+      answer_relevancy: 1.0
+      answer_correctness: 0.66
+      citation_fidelity: 1.0
+      hallucination_rate: 0.14
+    ci95:
+      faithfulness:
+      - 1.0
+      - 1.0
+      answer_relevancy:
+      - 1.0
+      - 1.0
+      answer_correctness:
+      - 0.3
+      - 0.96
+      citation_fidelity:
+      - 1.0
+      - 1.0
+      hallucination_rate:
+      - 0.0
+      - 0.32
+    valid_counts:
+      faithfulness: 5
+      answer_relevancy: 5
+      answer_correctness: 5
+      citation_fidelity: 5
+      hallucination_rate: 5
+    sample_count: 5
+    error_count: 0
+    latency_sec:
+      mean: 67.043
+      median: 63.631
+      p95: 76.322
+- run_id: b1427f98
+  timestamp: '2026-07-24T15:47:00.676055+00:00'
+  dataset: custom
+  models:
+  - gemini/gemini-2.5-flash-lite
+  agents:
+  - pubmed
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.0
+      answer_relevancy: 0.0
+      answer_correctness: 0.0
+      citation_fidelity: 0.0
+      hallucination_rate: 0.0
+    ci95:
+      faithfulness:
+      - 0.0
+      - 0.0
+      answer_relevancy:
+      - 0.0
+      - 0.0
+      answer_correctness:
+      - 0.0
+      - 0.0
+      citation_fidelity:
+      - 0.0
+      - 0.0
+      hallucination_rate:
+      - 0.0
+      - 0.0
+    valid_counts:
+      faithfulness: 1
+      answer_relevancy: 1
+      answer_correctness: 1
+      citation_fidelity: 5
+      hallucination_rate: 1
+    sample_count: 5
+    error_count: 5
+    latency_sec:
+      mean: 1401.459
+      median: 1496.57
+      p95: 1500.097
+- run_id: c52a6318
+  timestamp: '2026-07-24T17:59:02.391997+00:00'
+  dataset: custom
+  models:
+  - gemini/gemini-2.5-flash-lite
+  agents:
+  - local
+  n_samples: 5
+  summary:
+    scores:
+      faithfulness: 0.0
+      answer_relevancy: 0.0
+      answer_correctness: 0.0
+      citation_fidelity: 0.0
+      hallucination_rate: 0.0
+    ci95:
+      faithfulness:
+      - 0.0
+      - 0.0
+      answer_relevancy:
+      - 0.0
+      - 0.0
+      answer_correctness:
+      - 0.0
+      - 0.0
+      citation_fidelity:
+      - 0.0
+      - 0.0
+      hallucination_rate:
+      - 0.0
+      - 0.0
+    valid_counts:
+      faithfulness: 1
+      answer_relevancy: 1
+      answer_correctness: 1
+      citation_fidelity: 5
+      hallucination_rate: 1
+    sample_count: 5
+    error_count: 5
+    latency_sec:
+      mean: 599.489
+      median: 599.961
+      p95: 600.378

@@ -1,0 +1,30 @@
+name: Clinical Trials Synthesis
+version: 1.0.0
+domain: clinical_trials
+description: >
+  Synthesise a clinician-facing answer from ClinicalTrials.gov results.
+  Focus on study phase, enrollment, endpoints, sponsor, and status.
+
+template: |
+  You are a clinical trials research assistant synthesising trial data.
+
+  INSTRUCTIONS:
+  - Answer the question using ONLY the provided clinical trial sources.
+  - Cite each claim with bracketed source numbers, e.g. [1], [2].
+  - For each relevant trial, report: NCT number, phase, enrollment,
+    primary endpoint, sponsor, and current status.
+  - Highlight trials that are actively recruiting or recently completed.
+  - Compare trial designs where multiple relevant trials exist.
+  - If sources are insufficient, state what additional trial data is needed.
+
+  SOURCES:
+  {sources}
+
+  QUESTION:
+  {query}
+
+  ANSWER:
+
+variables:
+  - query
+  - sources

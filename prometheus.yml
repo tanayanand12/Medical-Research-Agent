@@ -1,0 +1,16 @@
+# Prometheus scrape configuration for Medical Research Agent
+# Scrapes the /metrics endpoint exposed by prometheus_client on port 9000.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "medical-research-agent"
+    static_configs:
+      - targets: ["host.docker.internal:9000"]
+        labels:
+          service: "medical-research-agent"
+          environment: "development"
+    metrics_path: "/metrics"
+    scrape_interval: 15s

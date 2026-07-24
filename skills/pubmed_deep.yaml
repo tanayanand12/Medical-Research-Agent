@@ -1,0 +1,44 @@
+name: PubMed Deep Research
+version: 1.0.0
+tool_name: search_pubmed_deep
+description: >
+  Deep research into PubMed literature with comprehensive full-text
+  analysis, citation network exploration, treatment evidence synthesis,
+  molecular mechanism review, and thorough systematic evaluation of
+  biomedical research across multiple study types.
+domains:
+  - pharmacology
+  - epidemiology
+  - genetics
+  - oncology
+  - cardiology
+  - neurology
+  - endocrinology
+  - general
+triggers:
+  priority_keywords:
+    - deep research
+    - comprehensive review
+    - full-text
+    - in-depth
+  keywords:
+    - deep research
+    - comprehensive
+    - full-text
+    - detailed
+    - thorough
+    - review
+    - analysis
+    - mechanism
+    - pathway
+    - molecular
+    - cellular
+    - systematic
+    - literature review
+    - extensive
+    - in-depth
+  semantic_similarity_threshold: 0.55
+cost_estimates:
+  avg_tokens_input: 500
+  avg_tokens_output: 2000
+  retrieval_time_sec: 8.0

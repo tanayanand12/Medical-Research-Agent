@@ -1,0 +1,32 @@
+# Medical Research Agent — Phase 10 requirements
+# Core framework
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.5.0
+starlette>=0.27.0
+
+# LLM abstraction
+litellm>=1.16.0
+python-dotenv>=1.0.0
+
+# Orchestration
+langgraph>=0.0.40
+
+# Observability
+langsmith>=0.0.70
+prometheus-client>=0.19.0
+
+# Data & retrieval
+requests>=2.31.0
+PyYAML>=6.0.1
+numpy>=1.24.0
+faiss-cpu>=1.7.4
+rank-bm25>=0.2.2
+sentence-transformers>=5.4.1
+tenacity>=9.1.4
+
+# Evaluation (optional — needed for eval/ harness)
+# datasets>=2.14.0
+
+# Testing
+pytest>=7.4.0

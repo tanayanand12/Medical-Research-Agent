@@ -1,0 +1,217 @@
+[
+  {
+    "id": "pubmed_01",
+    "category": "literature",
+    "target_agents": ["pubmed"],
+    "top_k": 3,
+    "context": {"max_papers": 15},
+    "question": "What is the evidence for SGLT2 inhibitors in heart failure with preserved ejection fraction?",
+    "answer": "SGLT2 inhibitors reduce heart failure hospitalization and cardiovascular death in HFpEF across EMPEROR-Preserved, DELIVER, and meta-analyses."
+  },
+  {
+    "id": "pubmed_02",
+    "category": "literature",
+    "target_agents": ["pubmed"],
+    "top_k": 3,
+    "context": {"max_papers": 15},
+    "question": "What are the recommended first-line pharmacologic treatments for type 2 diabetes according to recent guidelines?",
+    "answer": "Metformin remains first-line unless contraindicated; GLP-1 receptor agonists and SGLT2 inhibitors are preferred when ASCVD, heart failure, or CKD is present."
+  },
+  {
+    "id": "pubmed_03",
+    "category": "literature",
+    "target_agents": ["pubmed"],
+    "top_k": 3,
+    "context": {"max_papers": 15},
+    "question": "What is the role of anticoagulation in atrial fibrillation and how is stroke risk stratified?",
+    "answer": "Oral anticoagulation is recommended for most patients with AF at elevated stroke risk (CHA2DS2-VASc), with DOACs preferred over warfarin when appropriate."
+  },
+  {
+    "id": "pubmed_04",
+    "category": "literature",
+    "target_agents": ["pubmed"],
+    "top_k": 3,
+    "context": {"max_papers": 15},
+    "question": "What are the main adverse effects associated with immune checkpoint inhibitors in oncology?",
+    "answer": "Immune-related adverse events include colitis, pneumonitis, hepatitis, endocrinopathies, dermatitis, and myocarditis; management involves corticosteroids and specialty consultation."
+  },
+  {
+    "id": "pubmed_05",
+    "category": "literature",
+    "target_agents": ["pubmed"],
+    "top_k": 3,
+    "context": {"max_papers": 15},
+    "question": "How effective are statins for primary prevention of cardiovascular disease?",
+    "answer": "Statins reduce major cardiovascular events in high-risk primary prevention populations; benefit depends on baseline risk, LDL reduction, and treatment adherence."
+  },
+  {
+    "id": "fda_01",
+    "category": "regulatory",
+    "target_agents": ["fda"],
+    "top_k": 5,
+    "context": {"max_records": 25},
+    "question": "What FDA-approved indications exist for semaglutide?",
+    "answer": "Semaglutide is FDA-approved for type 2 diabetes (Ozempic, Rybelsus), chronic weight management (Wegovy), and reduction of major adverse cardiovascular events in adults with T2D and established CVD."
+  },
+  {
+    "id": "fda_02",
+    "category": "regulatory",
+    "target_agents": ["fda"],
+    "top_k": 5,
+    "context": {"max_records": 25},
+    "question": "What are the FDA boxed warnings for fluoroquinolone antibiotics?",
+    "answer": "FDA boxed warnings include disabling and potentially irreversible serious adverse reactions affecting tendons, muscles, joints, nerves, and CNS, plus exacerbation of myasthenia gravis."
+  },
+  {
+    "id": "fda_03",
+    "category": "regulatory",
+    "target_agents": ["fda"],
+    "top_k": 5,
+    "context": {"max_records": 25},
+    "question": "What adverse events have been reported for pembrolizumab in FDA labels?",
+    "answer": "FDA labeling documents immune-mediated adverse reactions including pneumonitis, colitis, hepatitis, endocrinopathies, nephritis, and severe infusion reactions."
+  },
+  {
+    "id": "fda_04",
+    "category": "regulatory",
+    "target_agents": ["fda"],
+    "top_k": 5,
+    "context": {"max_records": 25},
+    "question": "What is the FDA-approved use of naloxone nasal spray?",
+    "answer": "Naloxone nasal spray is approved for emergency treatment of known or suspected opioid overdose."
+  },
+  {
+    "id": "fda_05",
+    "category": "regulatory",
+    "target_agents": ["fda"],
+    "top_k": 5,
+    "context": {"max_records": 25},
+    "question": "What contraindications are listed for metformin in FDA drug labeling?",
+    "answer": "Metformin is contraindicated in severe renal impairment (eGFR below 30 mL/min/1.73 m²), acute or chronic metabolic acidosis, and hypersensitivity to metformin."
+  },
+  {
+    "id": "ct_01",
+    "category": "clinical_trials",
+    "target_agents": ["clinical_trials"],
+    "top_k": 5,
+    "context": {"max_trials": 10},
+    "question": "What Phase 3 clinical trials are investigating GLP-1 agonists for obesity?",
+    "answer": "Multiple Phase 3 trials evaluate GLP-1 and dual incretin agonists for obesity and overweight with comorbidities, including SURMOUNT, STEP, and OASIS programs."
+  },
+  {
+    "id": "ct_02",
+    "category": "clinical_trials",
+    "target_agents": ["clinical_trials"],
+    "top_k": 5,
+    "context": {"max_trials": 10},
+    "question": "Are there active trials studying CAR-T therapy for multiple myeloma?",
+    "answer": "Numerous active trials study BCMA-targeted CAR-T and bispecific antibodies for relapsed/refractory multiple myeloma."
+  },
+  {
+    "id": "ct_03",
+    "category": "clinical_trials",
+    "target_agents": ["clinical_trials"],
+    "top_k": 5,
+    "context": {"max_trials": 10},
+    "question": "What recruiting trials exist for Alzheimer's disease disease-modifying therapies?",
+    "answer": "Recruiting AD trials include anti-amyloid monoclonal antibodies, anti-tau agents, and combination therapies across early and mild cognitive impairment populations."
+  },
+  {
+    "id": "ct_04",
+    "category": "clinical_trials",
+    "target_agents": ["clinical_trials"],
+    "top_k": 5,
+    "context": {"max_trials": 10},
+    "question": "What clinical trials are evaluating mRNA vaccines for influenza?",
+    "answer": "Phase 1–3 trials are evaluating seasonal and pandemic influenza mRNA vaccine candidates from multiple sponsors."
+  },
+  {
+    "id": "ct_05",
+    "category": "clinical_trials",
+    "target_agents": ["clinical_trials"],
+    "top_k": 5,
+    "context": {"max_trials": 10},
+    "question": "Are there ongoing trials of SGLT2 inhibitors in chronic kidney disease?",
+    "answer": "Ongoing and completed trials evaluate SGLT2 inhibitors for CKD progression and cardiorenal outcomes beyond diabetes indications."
+  },
+  {
+    "id": "local_01",
+    "category": "local_index",
+    "target_agents": ["local"],
+    "top_k": 3,
+    "question": "What is the recommended blood pressure target for adults with hypertension in this guideline excerpt?",
+    "answer": "The target is less than 130/80 mmHg for most adults with hypertension when tolerated.",
+    "documents": [
+      {
+        "doc_id": 1,
+        "text": "Hypertension Guideline Excerpt (2024): For adults with confirmed hypertension, initiate lifestyle modification and pharmacotherapy to achieve a blood pressure target of less than 130/80 mmHg when treatment is tolerated and not contraindicated.",
+        "metadata": {"title": "Hypertension Management Guideline", "authors": ["Clinical Guidelines Committee"], "year": 2024}
+      },
+      {
+        "doc_id": 2,
+        "text": "First-line antihypertensive classes include thiazide diuretics, ACE inhibitors, ARBs, and calcium channel blockers depending on comorbidities.",
+        "metadata": {"title": "Pharmacologic Therapy", "authors": ["Clinical Guidelines Committee"], "year": 2024}
+      }
+    ]
+  },
+  {
+    "id": "local_02",
+    "category": "local_index",
+    "target_agents": ["local"],
+    "top_k": 3,
+    "question": "What fasting glucose threshold defines diabetes in this institutional protocol?",
+    "answer": "Fasting plasma glucose of 126 mg/dL or higher on two occasions defines diabetes.",
+    "documents": [
+      {
+        "doc_id": 1,
+        "text": "Institutional Diabetes Diagnostic Protocol: Diabetes is diagnosed when fasting plasma glucose is 126 mg/dL or higher on two separate occasions, or HbA1c is 6.5% or higher.",
+        "metadata": {"title": "Diabetes Diagnostic Protocol", "authors": ["Endocrinology Service"], "year": 2023}
+      }
+    ]
+  },
+  {
+    "id": "local_03",
+    "category": "local_index",
+    "target_agents": ["local"],
+    "top_k": 3,
+    "question": "What prophylactic antibiotic is recommended before dental procedures for patients with prosthetic joints per this memo?",
+    "answer": "This memo states antibiotic prophylaxis is generally not recommended for dental procedures in patients with prosthetic joints.",
+    "documents": [
+      {
+        "doc_id": 1,
+        "text": "Orthopedic Infection Prevention Memo: Routine antibiotic prophylaxis before dental procedures is not recommended for patients with well-functioning prosthetic joints without history of prosthetic joint infection.",
+        "metadata": {"title": "PJI Prevention Memo", "authors": ["Orthopedics Department"], "year": 2022}
+      }
+    ]
+  },
+  {
+    "id": "local_04",
+    "category": "local_index",
+    "target_agents": ["local"],
+    "top_k": 3,
+    "question": "What creatinine clearance cutoff requires dose adjustment for enoxaparin in this formulary note?",
+    "answer": "Dose adjustment is required when creatinine clearance is below 30 mL/min.",
+    "documents": [
+      {
+        "doc_id": 1,
+        "text": "Formulary Clinical Note — Enoxaparin: Reduce dose and increase monitoring when creatinine clearance is below 30 mL/min; avoid standard prophylactic dosing in severe renal impairment without adjustment.",
+        "metadata": {"title": "Enoxaparin Renal Dosing", "authors": ["Pharmacy Therapeutics"], "year": 2024}
+      }
+    ]
+  },
+  {
+    "id": "local_05",
+    "category": "local_index",
+    "target_agents": ["local"],
+    "top_k": 3,
+    "question": "What is the institutional policy on contact precautions duration for C. difficile infection?",
+    "answer": "Contact precautions continue until diarrhea resolves and for 48 hours after the last unformed stool.",
+    "documents": [
+      {
+        "doc_id": 1,
+        "text": "Infection Control Policy IC-014: Patients with Clostridioides difficile infection remain on contact precautions for the duration of diarrhea and for 48 hours after the last unformed stool.",
+        "metadata": {"title": "C. difficile Precautions", "authors": ["Infection Prevention"], "year": 2023}
+      }
+    ]
+  }
+]

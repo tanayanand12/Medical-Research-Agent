@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -r requirements.txt
+      - run: python -m compileall -q .
+      - name: Run deterministic offline suite
+        run: >-
+          python -m pytest
+          test_phase4_integration.py
+          test_reliability.py
+          eval/test_metrics.py
+          eval/test_finalize_results.py
+          eval/test_retrieval_metrics.py
+          eval/test_routing_eval.py
+          test_skill_router_precision.py
+          -q
+
+  container:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: medical-research-agent:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

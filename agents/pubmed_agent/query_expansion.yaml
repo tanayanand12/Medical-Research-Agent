@@ -1,0 +1,24 @@
+agent: pubmed
+task: query_expansion
+template: |
+  You are a medical librarian expert in PubMed search strategies.
+  Analyse this medical research question and extract search terms.
+
+  Question: {query}
+
+  Return ONLY a JSON object with exactly these four keys. No markdown, no explanation.
+
+  {{
+    "medical_concepts": ["2-4 core disease or treatment concepts"],
+    "mesh_terms": ["2-4 MeSH Medical Subject Headings"],
+    "synonyms": ["2-4 abbreviations, brand names, or alternative names"],
+    "related_terms": ["2-4 broader or narrower related terms"]
+  }}
+
+  Rules:
+  - Plain strings only — no URLs, no field qualifiers, no ICD codes.
+  - Use terminology researchers use in paper titles and abstracts.
+  - Include common abbreviations (MI for myocardial infarction, etc.).
+  - If a category has no relevant terms, return an empty list.
+variables: [query]
+model_tier: fast

@@ -1,0 +1,52 @@
+name: PubMed Search
+version: 1.0.0
+tool_name: search_pubmed
+description: >
+  Search PubMed for biomedical literature including research papers,
+  clinical studies, drug treatment evaluations, disease mechanisms,
+  systematic reviews, and meta-analyses across all medical domains.
+domains:
+  - pharmacology
+  - epidemiology
+  - genetics
+  - oncology
+  - cardiology
+  - neurology
+  - endocrinology
+  - general
+triggers:
+  priority_keywords:
+    - evidence
+    - guideline
+    - systematic review
+    - meta-analysis
+    - adverse effects
+    - peer-reviewed
+    - published
+  keywords:
+    - research
+    - study
+    - paper
+    - journal
+    - article
+    - literature
+    - meta-analysis
+    - systematic review
+    - evidence
+    - findings
+    - published
+    - treatment
+    - drug
+    - disease
+    - therapy
+    - clinical
+    - outcome
+    - patient
+    - efficacy
+    - mechanism
+    - biomedical
+  semantic_similarity_threshold: 0.6
+cost_estimates:
+  avg_tokens_input: 200
+  avg_tokens_output: 800
+  retrieval_time_sec: 3.0
