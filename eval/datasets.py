@@ -5,6 +5,7 @@ Provides two loaders plus a generic CSV/JSON loader:
 
 * :class:`MedQADataset`  — USMLE-style multiple-choice QA (Jin et al., 2021)
 * :class:`BioASQDataset` — BioASQ biomedical QA (Tsatsaronis et al., 2015)
+* :class:`MedAgentsBenchDataset` — MedAgentsBench test_hard (Tang et al., 2025; separate from MedQA)
 * :class:`CustomDataset`  — load any CSV/JSON with ``question`` and ``answer`` columns
 
 Common interface
@@ -239,6 +240,98 @@ class BioASQDataset(BaseDataset):
 
 
 # ---------------------------------------------------------------------- #
+# MedAgentsBench (test_hard — separate from standalone MedQA)
+# ---------------------------------------------------------------------- #
+
+
+class MedAgentsBenchDataset(BaseDataset):
+    """MedAgentsBench ``test_hard`` split (N=862).
+
+    **Not merged with** :class:`MedQADataset`. The 100 MedQA-hard items here are
+    already inside the 862; standalone MedQA (~1,273) remains a separate benchmark.
+
+    Loads from ``eval/data/medagentsbench_test_hard.json`` when present.
+    Otherwise raises :class:`eval.medagentsbench.MedAgentsBenchNotDownloadedError`
+    with materialization instructions (no auto-download in stub mode).
+
+    Supports stratified sampling by ``source_benchmark`` for pilot sizes (n=20, 100).
+    """
+
+    name = "medagentsbench_test_hard"
+
+    def __init__(
+        self,
+        n_samples: Optional[int] = None,
+        seed: int = 42,
+        *,
+        items: Optional[List[Dict[str, Any]]] = None,
+        local_path: Optional[str] = None,
+        allow_download: bool = False,
+        stratified: bool = True,
+    ) -> None:
+        self._injected_items = items
+        self._local_path = Path(local_path) if local_path else None
+        self._allow_download = allow_download
+        self._stratified = stratified
+        self._provenance: Dict[str, Any] = {}
+        self._items: List[Dict[str, Any]] = []
+        self._load()
+        if n_samples is not None and n_samples < len(self._items):
+            if self._stratified and self._has_source_labels():
+                from eval.medagentsbench import stratified_sample_by_source
+
+                self._items = stratified_sample_by_source(
+                    self._items, n_samples, seed=seed
+                )
+            else:
+                rng = random.Random(seed)
+                self._items = rng.sample(self._items, n_samples)
+        self._question_idx: Dict[str, int] = {
+            item["question"]: i for i, item in enumerate(self._items)
+        }
+
+    def _has_source_labels(self) -> bool:
+        return any(item.get("source_benchmark") for item in self._items)
+
+    def _load(self) -> None:
+        from eval.medagentsbench import (
+            load_test_hard_items,
+            provenance_metadata,
+        )
+
+        if self._injected_items is not None:
+            self._items = list(self._injected_items)
+            self._provenance = provenance_metadata(loaded_n=len(self._items))
+            logger.info(
+                "MedAgentsBench: loaded %d injected items", len(self._items)
+            )
+            return
+
+        self._items = load_test_hard_items(
+            local_path=self._local_path,
+            allow_download=self._allow_download,
+        )
+        self._provenance = provenance_metadata(loaded_n=len(self._items))
+
+    def get_provenance(self) -> Dict[str, Any]:
+        """Return provenance metadata (paper, arXiv, HF id, split, N, source breakdown)."""
+        return dict(self._provenance)
+
+    def get_source_benchmark(self, question: str) -> str:
+        idx = self._question_idx.get(question)
+        if idx is None:
+            return ""
+        return str(self._items[idx].get("source_benchmark") or "")
+
+    def source_counts(self) -> Dict[str, int]:
+        counts: Dict[str, int] = {}
+        for item in self._items:
+            source = str(item.get("source_benchmark") or "unknown")
+            counts[source] = counts.get(source, 0) + 1
+        return counts
+
+
+# ---------------------------------------------------------------------- #
 # Custom (CSV / JSON)
 # ---------------------------------------------------------------------- #
 
@@ -300,6 +393,7 @@ class CustomDataset(BaseDataset):
 DATASET_REGISTRY: Dict[str, type] = {
     "medqa": MedQADataset,
     "bioasq": BioASQDataset,
+    "medagentsbench_test_hard": MedAgentsBenchDataset,
 }
 
 
@@ -314,7 +408,7 @@ def get_dataset(
     Parameters
     ----------
     name : str
-        ``"medqa"``, ``"bioasq"``, or ``"custom"``.
+        ``"medqa"``, ``"bioasq"``, ``"medagentsbench_test_hard"``, or ``"custom"``.
     n_samples : int, optional
         Sub-sample the dataset to this size.
     seed : int
