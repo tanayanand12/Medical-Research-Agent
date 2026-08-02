@@ -14,6 +14,8 @@ from typing import Any, Dict
 import requests
 from dotenv import load_dotenv
 
+from evaluation_core import RuntimeDeadlineExceeded
+from evaluation_core.deadline import ensure_deadline, remaining_seconds
 from tools.mcp_base import MCPToolBase
 
 load_dotenv()
@@ -101,8 +103,10 @@ class PubMedDeepTool(MCPToolBase):
         rerank = input_dict.get("rerank", True)
         search_recent = input_dict.get("search_recent", True)
         search_foundational = input_dict.get("search_foundational", True)
+        deadline_at = input_dict.get("_runtime_deadline_at_monotonic")
 
         try:
+            ensure_deadline(deadline_at)
             logger.info(
                 "search_pubmed_deep: max_papers=%d top_k=%d rerank=%s",
                 max_papers, top_k, rerank,
@@ -119,13 +123,26 @@ class PubMedDeepTool(MCPToolBase):
                     "search_recent": search_recent,
                     "search_foundational": search_foundational,
                 },
-                timeout=self._timeout,
+                timeout=remaining_seconds(
+                    deadline_at, default=self._timeout
+                ),
             )
             response.raise_for_status()
             result = response.json()
 
             papers_analyzed = result.get("papers_analyzed", 0)
             citations = result.get("citations", [])
+            retrieved_documents = list(
+                result.get("retrieved_documents") or []
+            )
+            synthesis_context = list(result.get("synthesis_context") or [])
+            if result.get("answer") and (
+                not retrieved_documents or not synthesis_context
+            ):
+                return self._error(
+                    "pubmed_deep_exact_context_unavailable",
+                    time.time() - start,
+                )
             confidence = self._calculate_confidence(papers_analyzed, len(citations))
             elapsed = time.time() - start
 
@@ -135,34 +152,52 @@ class PubMedDeepTool(MCPToolBase):
             )
 
             return self._success(
-                results=citations,
+                results=retrieved_documents,
                 retrieval_time_sec=elapsed,
                 answer=result.get("answer", ""),
                 citations=citations,
                 confidence=confidence,
                 papers_analyzed=papers_analyzed,
                 search_queries=result.get("search_queries", []),
+                synthesis_context=synthesis_context,
             )
 
+        except RuntimeDeadlineExceeded:
+            return self._error(
+                "runtime_deadline_exhausted", time.time() - start
+            )
         except requests.exceptions.Timeout:
             elapsed = time.time() - start
+            if deadline_at is not None:
+                try:
+                    remaining_seconds(deadline_at)
+                except RuntimeDeadlineExceeded:
+                    return self._error(
+                        "runtime_deadline_exhausted", elapsed
+                    )
             msg = f"Request timed out after {self._timeout}s"
             logger.error("search_pubmed_deep: %s", msg)
             return self._error(msg, elapsed)
         except requests.exceptions.ConnectionError as exc:
             elapsed = time.time() - start
-            msg = f"Connection error: {exc}"
+            msg = f"connection_failed:{type(exc).__name__}"
             logger.error("search_pubmed_deep: %s", msg)
             return self._error(msg, elapsed)
         except requests.exceptions.HTTPError as exc:
             elapsed = time.time() - start
-            msg = f"HTTP {exc.response.status_code}: {exc.response.text}"
+            status_code = getattr(exc.response, "status_code", "unknown")
+            msg = f"http_failed:status_{status_code}"
             logger.error("search_pubmed_deep: %s", msg)
             return self._error(msg, elapsed)
         except Exception as exc:
             elapsed = time.time() - start
-            logger.error("search_pubmed_deep failed: %s", exc, exc_info=True)
-            return self._error(str(exc), elapsed)
+            error_type = type(exc).__name__
+            logger.error(
+                "search_pubmed_deep failed error_type=%s", error_type
+            )
+            return self._error(
+                f"search_pubmed_deep_failed:{error_type}", elapsed
+            )
 
     @staticmethod
     def _calculate_confidence(papers_analyzed: int, citations_count: int) -> float:

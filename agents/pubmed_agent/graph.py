@@ -35,8 +35,15 @@ from langgraph.graph import END, StateGraph  # type: ignore
 from agents.base import (  # type: ignore
     AgentOutput,
     SubAgentGraph,
+    llm_deadline_kwargs,
+    llm_telemetry_kwargs,
     load_prompt,
     serialized_invoke,
+)
+from evaluation_core import (
+    RuntimeDeadlineExceeded,
+    safe_error_type,
+    stable_document_id,
 )
 
 from utils.perf import timed_node, time_block  
@@ -79,6 +86,11 @@ class PubMedState(TypedDict):
     citations: List[str]   # AMA-formatted strings
     confidence: float
     model_used: str
+    synthesis_context: List[Dict[str, Any]]
+    stage_latency_sec: Dict[str, float]
+    token_usage: Dict[str, int]
+    cost_breakdown_usd: Dict[str, float]
+    attempt_events: List[Dict[str, Any]]
 
     # Metadata
     error: Optional[str]
@@ -186,10 +198,15 @@ class PubMedAgentGraph(SubAgentGraph):
                 messages=[{"role": "user", "content": prompt_text}],
                 temperature=0.3,
                 max_tokens=500,
+                **llm_deadline_kwargs(state),
+                **llm_telemetry_kwargs(state, "agent_query_expansion"),
             )
             return {"expanded_query": expanded.strip() if expanded else query}
         except Exception as exc:
-            logger.warning("Query expansion failed, using original: %s", exc)
+            logger.warning(
+                "Query expansion failed error_type=%s",
+                safe_error_type(exc),
+            )
             return {"expanded_query": query}
 
     # ------------------------------------------------------------------
@@ -204,14 +221,26 @@ class PubMedAgentGraph(SubAgentGraph):
 
         try:
             with time_block("ncbi_fetch", max_papers=max_papers):
-                result = self.fetcher.analyze_user_query(query, max_papers=max_papers)
+                result = self.fetcher.analyze_user_query(
+                    query,
+                    max_papers=max_papers,
+                    llm_kwargs={
+                        **llm_deadline_kwargs(state),
+                        **llm_telemetry_kwargs(
+                            state, "pubmed_query_extraction"
+                        ),
+                    },
+                )
 
             if not result.get("success"):
-                logger.warning("PubMed fetch failed: %s", result.get("error"))
+                logger.warning(
+                    "PubMed fetch failed error_type=%s",
+                    result.get("error_type") or "FetcherError",
+                )
                 return {
                     "fetched_papers": {},
                     "fetch_meta":     result.get("query_analysis", {}),
-                    "error":          result.get("error", "Fetch failed"),
+                    "error":          "pubmed_fetch_failed",
                 }
 
             # Serialize Paper objects → dicts (LangGraph state must be JSON-serializable)
@@ -230,11 +259,14 @@ class PubMedAgentGraph(SubAgentGraph):
                 "fetch_meta":     result.get("query_analysis", {}),
             }
         except Exception as exc:
-            logger.error("Fetch node error: %s", exc, exc_info=True)
+            logger.error(
+                "Fetch node failed error_type=%s",
+                safe_error_type(exc),
+            )
             return {
                 "fetched_papers": {},
                 "fetch_meta":     {},
-                "error":          str(exc),
+                "error":          f"fetch_failed:{safe_error_type(exc)}",
             }
 
     # ------------------------------------------------------------------
@@ -339,10 +371,23 @@ class PubMedAgentGraph(SubAgentGraph):
             embeddings = []
             try:
                 with time_block("embed_chunks", n_chunks=len(all_chunk_texts)):
-                    embeddings = self.embedder.embed_batch(all_chunk_texts)
+                    deadline_at = (state.get("context") or {}).get(
+                        "_runtime_deadline_at_monotonic"
+                    )
+                    embeddings = self.embedder.embed_batch(
+                        all_chunk_texts,
+                        deadline_at=deadline_at,
+                        client_max_attempts=(
+                            1 if deadline_at is not None else None
+                        ),
+                    )
+            except RuntimeDeadlineExceeded:
+                raise
             except Exception as exc:
                 logger.warning(
-                    "Dense indexing unavailable; continuing with BM25: %s", exc
+                    "Dense indexing unavailable; continuing with BM25 "
+                    "error_type=%s",
+                    safe_error_type(exc),
                 )
 
             if embeddings:
@@ -366,8 +411,14 @@ class PubMedAgentGraph(SubAgentGraph):
 
             return {"chunks_ready": True}
         except Exception as exc:
-                logger.error("chunk_and_index failed: %s", exc, exc_info=True)
-                return {"chunks_ready": False, "error": str(exc)}
+                logger.error(
+                    "chunk_and_index failed error_type=%s",
+                    safe_error_type(exc),
+                )
+                return {
+                    "chunks_ready": False,
+                    "error": f"chunk_index_failed:{safe_error_type(exc)}",
+                }
 
     # ------------------------------------------------------------------
     # Node: retrieve
@@ -388,7 +439,13 @@ class PubMedAgentGraph(SubAgentGraph):
 
         start = time.time()
         try:
-            results = self._hybrid.retrieve(query, top_k=top_k * 3)
+            results = self._hybrid.retrieve(
+                query,
+                top_k=top_k * 3,
+                deadline_at=(state.get("context") or {}).get(
+                    "_runtime_deadline_at_monotonic"
+                ),
+            )
             elapsed = time.time() - start
             retrieval_dicts = [
                 {
@@ -408,11 +465,14 @@ class PubMedAgentGraph(SubAgentGraph):
             }
         except Exception as exc:
             elapsed = time.time() - start
-            logger.error("Retrieval failed: %s", exc, exc_info=True)
+            logger.error(
+                "Retrieval failed error_type=%s",
+                safe_error_type(exc),
+            )
             return {
                 "retrieval_results":  [],
                 "retrieval_time_sec": elapsed,
-                "error": str(exc),
+                "error": f"retrieval_failed:{safe_error_type(exc)}",
             }
 
     # ------------------------------------------------------------------
@@ -461,7 +521,10 @@ class PubMedAgentGraph(SubAgentGraph):
                 ]
             }
         except Exception as exc:
-            logger.warning("Reranking failed, keeping original order: %s", exc)
+            logger.warning(
+                "Reranking failed; keeping original order error_type=%s",
+                safe_error_type(exc),
+            )
             return {"reranked_results": results[:top_k]}
 
     # ------------------------------------------------------------------
@@ -516,6 +579,7 @@ class PubMedAgentGraph(SubAgentGraph):
                 "citations": [],
                 "confidence": 0.0,
                 "model_used": self.llm.default_model,
+                "synthesis_context": [],
                 "execution_time_sec": time.time() - start,
             }
 
@@ -523,6 +587,9 @@ class PubMedAgentGraph(SubAgentGraph):
             with time_block("build_citations_and_sources", n_results=len(results)):
                 citations    = self._extract_citations(results, papers)
                 sources_text = self._format_sources(results, citations)
+                synthesis_context = self._build_synthesis_context(
+                    results, citations
+                )
 
             template = load_prompt(self.domain, "synthesis")
             if not template:
@@ -536,11 +603,17 @@ class PubMedAgentGraph(SubAgentGraph):
 
             prompt_text = template.format(query=query, sources=sources_text)
             with time_block("llm_synthesis"):
-                answer = self.llm.chat(
+                from runtime_verification import call_llm_with_metadata
+
+                call_result = call_llm_with_metadata(
+                    self.llm,
                     messages=[{"role": "user", "content": prompt_text}],
                     temperature=0.2,
                     max_tokens=1500,
+                    **llm_deadline_kwargs(state),
+                    **llm_telemetry_kwargs(state, "agent_synthesis"),
                 )
+                answer = call_result.text
             
 
             confidence = self._calculate_confidence(
@@ -554,18 +627,28 @@ class PubMedAgentGraph(SubAgentGraph):
                 "answer":             answer,
                 "citations":          citations,
                 "confidence":         confidence,
-                "model_used":         self.llm.default_model,
+                "synthesis_context":  synthesis_context,
                 "execution_time_sec": time.time() - start,
+                **self._generation_telemetry(state, call_result),
             }
         except Exception as exc:
-            logger.error("Synthesis failed: %s", exc, exc_info=True)
+            logger.error(
+                "Synthesis failed error_type=%s",
+                safe_error_type(exc),
+            )
             return {
-                "answer":             f"Error synthesising PubMed response: {exc}",
+                "answer":             "Unable to synthesise the PubMed evidence.",
                 "citations":          [],
                 "confidence":         0.0,
-                "model_used":         "",
-                "error":              str(exc),
+                "synthesis_context":  [],
+                "error":              f"synthesis_failed:{safe_error_type(exc)}",
                 "execution_time_sec": time.time() - start,
+                **self._failure_telemetry(
+                    state,
+                    exc,
+                    stage="agent_synthesis",
+                    latency_sec=time.time() - start,
+                ),
             }
 
     # ------------------------------------------------------------------
@@ -724,6 +807,36 @@ class PubMedAgentGraph(SubAgentGraph):
 
         return "\n\n---\n\n".join(parts)
 
+    def _build_synthesis_context(
+        self,
+        results: List[Dict[str, Any]],
+        citations: List[str],
+    ) -> List[Dict[str, Any]]:
+        """Record the exact PubMed chunks and markers sent to the LLM."""
+        pmid_to_marker: Dict[str, int] = {}
+        for marker, citation in enumerate(citations, 1):
+            match = re.search(r"PMID:\s*(\d+)", citation)
+            if match:
+                pmid_to_marker[match.group(1)] = marker
+
+        manifest: List[Dict[str, Any]] = []
+        for rank, result in enumerate(results, 1):
+            text = str(result.get("text") or "")
+            included_text = text[:800]
+            pmid = str(result.get("metadata", {}).get("pmid") or "")
+            manifest.append(
+                {
+                    "document_id": stable_document_id(
+                        result, self.domain, rank
+                    ),
+                    "text": included_text,
+                    "original_length": len(text),
+                    "truncated": len(included_text) < len(text),
+                    "citation_marker": pmid_to_marker.get(pmid, "?"),
+                }
+            )
+        return manifest
+
     @timed_node("calculate_confidence")
     def _calculate_confidence(
         self,
@@ -803,19 +916,20 @@ class PubMedAgentGraph(SubAgentGraph):
             "citations":          [],
             "confidence":         0.0,
             "model_used":         "",
+            "synthesis_context":  [],
+            "stage_latency_sec":   {},
+            "token_usage":         {},
+            "cost_breakdown_usd":  {},
+            "attempt_events":      [],
             "error":              None,
             "execution_time_sec": 0.0,
         }
 
         result = self.graph.invoke(initial_state)
 
-        return AgentOutput(
-            answer=result.get("answer", ""),
-            citations=result.get("citations", []),
-            confidence=result.get("confidence", 0.0),
-            sources=result.get("reranked_results", []),
-            model_used=result.get("model_used", ""),
-            domain=self.domain,
-            execution_time_sec=time.time() - start,
-            error=result.get("error"),
+        return self._output_from_result(
+            result=result,
+            query=query,
+            context=context,
+            started_at=start,
         )

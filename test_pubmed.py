@@ -1,3 +1,10 @@
+if __name__ != "__main__":
+    import pytest
+
+    pytest.skip(
+        "manual online PubMed provider smoke script", allow_module_level=True
+    )
+
 from dotenv import load_dotenv  # type: ignore
 load_dotenv()
 

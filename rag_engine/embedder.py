@@ -52,7 +52,13 @@ class Embedder:
     # Public API
     # ------------------------------------------------------------------ #
 
-    def embed(self, text: str) -> List[float]:
+    def embed(
+        self,
+        text: str,
+        *,
+        deadline_at: Optional[float] = None,
+        client_max_attempts: Optional[int] = None,
+    ) -> List[float]:
         """Embed a single text string.
 
         Returns
@@ -60,7 +66,12 @@ class Embedder:
         list[float]
             Embedding vector.
         """
-        return self._client.embed(text, model=self._model)
+        return self._client.embed(
+            text,
+            model=self._model,
+            deadline_at=deadline_at,
+            client_max_attempts=client_max_attempts,
+        )
 
     # def embed_batch(self, texts: List[str]) -> List[List[float]]:
     #     """Embed a batch of texts.
@@ -78,7 +89,13 @@ class Embedder:
     #         vectors.append(self.embed(text))
     #     return vectors
 
-    def embed_batch(self, texts: List[str]) -> List[List[float]]:
+    def embed_batch(
+        self,
+        texts: List[str],
+        *,
+        deadline_at: Optional[float] = None,
+        client_max_attempts: Optional[int] = None,
+    ) -> List[List[float]]:
         """Embed a list of texts via a single batched LLMClient call.
 
         Delegates entirely to :meth:`LLMClient.embed_batch`, which handles
@@ -97,4 +114,9 @@ class Embedder:
         """
         if not texts:
             return []
-        return self._client.embed_batch(texts, model=self._model)
+        return self._client.embed_batch(
+            texts,
+            model=self._model,
+            deadline_at=deadline_at,
+            client_max_attempts=client_max_attempts,
+        )

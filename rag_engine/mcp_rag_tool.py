@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 
 import yaml # type: ignore
 
+from evaluation_core import ensure_deadline
 from tools.mcp_base import MCPToolBase
 
 logger = logging.getLogger(__name__)
@@ -164,14 +165,22 @@ class RAGTool(MCPToolBase):
         top_k = input_dict.get("top_k", 10)
         domain = input_dict.get("domain", "pubmed")
         do_rerank = input_dict.get("rerank", True)
+        deadline_at = input_dict.get("_runtime_deadline_at_monotonic")
 
         try:
+            ensure_deadline(deadline_at)
             embedder = self._ensure_embedder()
 
             # --- Load or build index ---
             if index_path:
                 return self._query_existing_index(
-                    query, index_path, top_k, domain, do_rerank, start
+                    query,
+                    index_path,
+                    top_k,
+                    domain,
+                    do_rerank,
+                    start,
+                    deadline_at=deadline_at,
                 )
 
             if not documents:
@@ -188,9 +197,16 @@ class RAGTool(MCPToolBase):
             all_chunks: List[str] = []
             all_meta: List[Dict[str, Any]] = []
             for doc in documents:
+                ensure_deadline(deadline_at)
                 text = doc.get("text", "")
                 meta = doc.get("metadata", {})
-                chunks = chunker.chunk(text)
+                chunks = chunker.chunk(
+                    text,
+                    deadline_at=deadline_at,
+                    client_max_attempts=(
+                        1 if deadline_at is not None else None
+                    ),
+                )
                 for chunk in chunks:
                     all_chunks.append(chunk.text)
                     all_meta.append({**meta, "chunk_index": chunk.index})
@@ -204,7 +220,13 @@ class RAGTool(MCPToolBase):
                 )
 
             # Embed all chunks
-            vectors = embedder.embed_batch(all_chunks)
+            vectors = embedder.embed_batch(
+                all_chunks,
+                deadline_at=deadline_at,
+                client_max_attempts=(
+                    1 if deadline_at is not None else None
+                ),
+            )
             dimension = len(vectors[0])
 
             # Build indexes
@@ -217,12 +239,18 @@ class RAGTool(MCPToolBase):
 
             # Retrieve
             retriever = self._ensure_retriever(dimension)
-            hybrid_results = retriever.retrieve(query, top_k=top_k * 3)
+            hybrid_results = retriever.retrieve(
+                query,
+                top_k=top_k * 3,
+                deadline_at=deadline_at,
+            )
 
             # Rerank
             if do_rerank and hybrid_results:
+                ensure_deadline(deadline_at)
                 reranker = self._ensure_reranker()
                 reranked = reranker.rerank(query, hybrid_results, top_k=top_k)
+                ensure_deadline(deadline_at)
                 final_results = [
                     {
                         "text": r.text,
@@ -253,8 +281,12 @@ class RAGTool(MCPToolBase):
             )
 
         except Exception as exc:
-            logger.error("rag_retrieve failed: %s", exc, exc_info=True)
-            return self._error(str(exc), time.time() - start)
+            error_type = type(exc).__name__
+            logger.error("rag_retrieve failed error_type=%s", error_type)
+            return self._error(
+                f"rag_retrieve_failed:{error_type}",
+                time.time() - start,
+            )
 
     # ------------------------------------------------------------------ #
     # Existing index path
@@ -268,12 +300,15 @@ class RAGTool(MCPToolBase):
         domain: str,
         do_rerank: bool,
         start: float,
+        *,
+        deadline_at: Optional[float] = None,
     ) -> Dict[str, Any]:
         """Query a pre-built index on disk."""
         from rag_engine.dense_index import DenseIndex
         from rag_engine.sparse_index import BM25Index
 
         path = Path(index_path)
+        ensure_deadline(deadline_at)
 
         # Load dense index
         hnsw_path = path / "hnsw.index"
@@ -293,7 +328,11 @@ class RAGTool(MCPToolBase):
         dense.load(index_path)
 
         # Dense search
-        query_vector = embedder.embed(query)
+        query_vector = embedder.embed(
+            query,
+            deadline_at=deadline_at,
+            client_max_attempts=(1 if deadline_at is not None else None),
+        )
         dense_results = dense.search(query_vector, top_k=top_k * 3)
 
         # Sparse search (if BM25 index exists)
@@ -313,7 +352,11 @@ class RAGTool(MCPToolBase):
                 embedder=embedder,
                 rrf_k=60,
             )
-            hybrid_results = hybrid.retrieve(query, top_k=top_k * 3)
+            hybrid_results = hybrid.retrieve(
+                query,
+                top_k=top_k * 3,
+                deadline_at=deadline_at,
+            )
         else:
             # Convert dense results to a compatible format
             from rag_engine.hybrid_retriever import RetrievalResult
@@ -330,8 +373,10 @@ class RAGTool(MCPToolBase):
 
         # Rerank
         if do_rerank and hybrid_results:
+            ensure_deadline(deadline_at)
             reranker = self._ensure_reranker()
             reranked = reranker.rerank(query, hybrid_results, top_k=top_k)
+            ensure_deadline(deadline_at)
             final_results = [
                 {
                     "text": r.text,

@@ -9,6 +9,21 @@ import sys
 import os
 from pathlib import Path
 from typing import Optional
+from evaluation_core.privacy import sanitize_sensitive_text
+
+
+class SensitiveDataFilter(logging.Filter):
+    """Scrub common credentials from formatted log messages and exceptions."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.msg = sanitize_sensitive_text(record.getMessage())
+        record.args = ()
+        if record.exc_info and record.exc_info[1] is not None:
+            exc_type, exc, traceback = record.exc_info
+            safe_exc = RuntimeError(sanitize_sensitive_text(exc))
+            record.exc_info = (RuntimeError, safe_exc, traceback)
+            record.exc_text = None
+        return True
 
 def setup_unicode_logging(
     name: str = __name__,
@@ -53,6 +68,7 @@ def setup_unicode_logging(
         )
         file_handler.setLevel(log_level)
         file_handler.setFormatter(formatter)
+        file_handler.addFilter(SensitiveDataFilter())
         logger.addHandler(file_handler)
     
     # Add console handler with UTF-8 support
@@ -71,6 +87,7 @@ def setup_unicode_logging(
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(log_level)
         console_handler.setFormatter(formatter)
+        console_handler.addFilter(SensitiveDataFilter())
         logger.addHandler(console_handler)
     
     return logger
@@ -201,6 +218,8 @@ def configure_all_loggers():
         ],
         force=True
     )
+    for handler in logging.getLogger().handlers:
+        handler.addFilter(SensitiveDataFilter())
     
     # Suppress noisy loggers
     logging.getLogger("httpx").setLevel(logging.WARNING)

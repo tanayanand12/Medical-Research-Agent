@@ -21,12 +21,16 @@ import time
 from dataclasses import dataclass, field
 from functools import wraps
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict
 
 import yaml # type: ignore
 from langgraph.graph import END, StateGraph # type: ignore
+from evaluation_core import RuntimeDeadlineExceeded, safe_error_type
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from evaluation_core import EvaluationTrace
 
 _PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
 
@@ -63,6 +67,42 @@ def serialized_invoke(method):
 
     return wrapped
 
+
+def llm_deadline_kwargs(state: Dict[str, Any]) -> Dict[str, Any]:
+    """Translate the request deadline into provider-level LLM controls."""
+    deadline_at = (state.get("context") or {}).get(
+        "_runtime_deadline_at_monotonic"
+    )
+    if deadline_at is None:
+        return {}
+    remaining = float(deadline_at) - time.monotonic()
+    if remaining <= 0:
+        raise RuntimeDeadlineExceeded(
+            "runtime deadline expired before agent LLM call"
+        )
+    return {
+        "timeout": max(0.1, remaining),
+        "client_max_attempts": 1,
+        "deadline_at": float(deadline_at),
+    }
+
+
+def llm_telemetry_kwargs(
+    state: Dict[str, Any], stage: str
+) -> Dict[str, Any]:
+    """Attach non-provider telemetry labels consumed by ``LLMClient``."""
+    context = state.get("context") or {}
+    return {
+        "_telemetry_stage": stage,
+        "_telemetry_attempt_id": str(context.get("attempt_id") or ""),
+        "_telemetry_parent_attempt_id": str(
+            context.get("parent_attempt_id") or ""
+        ),
+        "_telemetry_repair_status": str(
+            context.get("repair_status") or "initial"
+        ),
+    }
+
 # ====================================================================== #
 # State
 # ====================================================================== #
@@ -91,6 +131,11 @@ class SubAgentState(TypedDict):
     citations: List[str]
     confidence: float
     model_used: str
+    synthesis_context: List[Dict[str, Any]]
+    stage_latency_sec: Dict[str, float]
+    token_usage: Dict[str, int]
+    cost_breakdown_usd: Dict[str, float]
+    attempt_events: List[Dict[str, Any]]
 
     # ---- Metadata ----
     error: Optional[str]
@@ -114,6 +159,7 @@ class AgentOutput:
     domain: str = ""
     execution_time_sec: float = 0.0
     error: Optional[str] = None
+    evaluation_trace: Optional["EvaluationTrace"] = None
 
 
 # ====================================================================== #
@@ -214,7 +260,7 @@ class SubAgentGraph:
     @property
     def llm(self):
         """LiteLLM router singleton."""
-        if self._llm is None:
+        if getattr(self, "_llm", None) is None:
             from llm_client import LLMClient
 
             self._llm = LLMClient()
@@ -264,13 +310,15 @@ class SubAgentGraph:
                 messages=[{"role": "user", "content": prompt_text}],
                 temperature=0.3,
                 max_tokens=500,
+                **llm_deadline_kwargs(state),
+                **llm_telemetry_kwargs(state, "agent_query_expansion"),
             )
             return {"expanded_query": expanded.strip() if expanded else query}
         except Exception as exc:
             logger.warning(
                 "%s: query expansion failed, using original: %s",
                 self.domain,
-                exc,
+                safe_error_type(exc),
             )
             return {"expanded_query": query}
 
@@ -297,6 +345,10 @@ class SubAgentGraph:
                 call_input["index_path"] = index_path
             if "documents" in context:
                 call_input["documents"] = context["documents"]
+            if context.get("_runtime_deadline_at_monotonic") is not None:
+                call_input["_runtime_deadline_at_monotonic"] = context[
+                    "_runtime_deadline_at_monotonic"
+                ]
 
             result = self.rag_tool.call(call_input)
             elapsed = time.time() - start
@@ -308,11 +360,15 @@ class SubAgentGraph:
             }
         except Exception as exc:
             elapsed = time.time() - start
-            logger.error("%s: retrieval failed: %s", self.domain, exc, exc_info=True)
+            logger.error(
+                "%s: retrieval failed error_type=%s",
+                self.domain,
+                safe_error_type(exc),
+            )
             return {
                 "retrieval_results": [],
                 "retrieval_time_sec": elapsed,
-                "error": str(exc),
+                "error": f"retrieval_failed:{safe_error_type(exc)}",
             }
 
     # ------------------------------------------------------------------ #
@@ -346,9 +402,9 @@ class SubAgentGraph:
             }
         except Exception as exc:
             logger.warning(
-                "%s: reranking failed, keeping original order: %s",
+                "%s: reranking failed, keeping original order error_type=%s",
                 self.domain,
-                exc,
+                safe_error_type(exc),
             )
             return {"reranked_results": results[:top_k]}
 
@@ -372,11 +428,18 @@ class SubAgentGraph:
                 "citations": [],
                 "confidence": 0.0,
                 "model_used": self.llm.default_model,
+                "synthesis_context": [],
                 "execution_time_sec": time.time() - start,
             }
 
         try:
+            from runtime_verification.telemetry import (
+                build_attempt_event,
+                call_llm_with_metadata,
+            )
+
             sources_text = self._format_sources(results)
+            synthesis_context = self._build_synthesis_context(results)
 
             template = load_prompt(self.domain, "synthesis")
             if not template:
@@ -386,11 +449,15 @@ class SubAgentGraph:
                 )
 
             prompt_text = template.format(query=query, sources=sources_text)
-            answer = self.llm.chat(
+            call_result = call_llm_with_metadata(
+                self.llm,
                 messages=[{"role": "user", "content": prompt_text}],
                 temperature=0.7,
                 max_tokens=1000,
+                **llm_deadline_kwargs(state),
+                **llm_telemetry_kwargs(state, "agent_synthesis"),
             )
+            answer = call_result.text
 
             citations = self._extract_citations(results)
             confidence = self._calculate_confidence(
@@ -400,24 +467,105 @@ class SubAgentGraph:
                 elapsed=time.time() - start,
             )
 
+            context = state.get("context", {})
+            trace_id = str(context.get("trace_id") or "unknown")
+            attempt_id = str(
+                context.get("attempt_id")
+                or f"{trace_id}:{self.domain}:1"
+            )
+            model_used = (
+                f"{call_result.model}@{call_result.model_revision}"
+                if call_result.model_revision
+                else call_result.model
+            )
             return {
                 "answer": answer,
                 "citations": citations,
                 "confidence": confidence,
-                "model_used": self.llm.default_model,
+                "model_used": model_used,
+                "synthesis_context": synthesis_context,
                 "execution_time_sec": time.time() - start,
+                "stage_latency_sec": {
+                    "generation": call_result.latency_sec,
+                },
+                "token_usage": {
+                    "input": call_result.tokens_in,
+                    "output": call_result.tokens_out,
+                    "total": call_result.tokens_in + call_result.tokens_out,
+                },
+                "cost_breakdown_usd": {
+                    "generation": call_result.cost_usd,
+                },
+                "attempt_events": [
+                    build_attempt_event(
+                        trace_id=trace_id,
+                        attempt_id=attempt_id,
+                        parent_attempt_id=context.get("parent_attempt_id"),
+                        stage="agent_synthesis",
+                        component=self.domain,
+                        status=str(call_result.status or "success"),
+                        repair_status=str(
+                            context.get("repair_status") or "initial"
+                        ),
+                        model=call_result.model,
+                        model_revision=call_result.model_revision,
+                        tokens_in=call_result.tokens_in,
+                        tokens_out=call_result.tokens_out,
+                        cost_usd=call_result.cost_usd,
+                        latency_sec=call_result.latency_sec,
+                        finish_reason=call_result.finish_reason,
+                        deadline_exhausted=(
+                            call_result.error_type
+                            == "RuntimeDeadlineExceeded"
+                        ),
+                        error_type=call_result.error_type,
+                        provider_metadata=call_result.provider_metadata,
+                    )
+                ],
             }
         except Exception as exc:
             logger.error(
-                "%s: synthesis failed: %s", self.domain, exc, exc_info=True
+                "%s: synthesis failed error_type=%s",
+                self.domain,
+                safe_error_type(exc),
             )
+            context = state.get("context", {})
+            trace_id = str(context.get("trace_id") or "unknown")
+            attempt_id = str(
+                context.get("attempt_id")
+                or f"{trace_id}:{self.domain}:1"
+            )
+            from runtime_verification.telemetry import build_attempt_event
+
             return {
-                "answer": f"Error synthesising {self.domain} response: {exc}",
+                "answer": f"Unable to synthesise the {self.domain} evidence.",
                 "citations": [],
                 "confidence": 0.0,
                 "model_used": "",
-                "error": str(exc),
+                "synthesis_context": [],
+                "error": f"synthesis_failed:{safe_error_type(exc)}",
                 "execution_time_sec": time.time() - start,
+                "attempt_events": [
+                    build_attempt_event(
+                        trace_id=trace_id,
+                        attempt_id=attempt_id,
+                        parent_attempt_id=context.get("parent_attempt_id"),
+                        stage="agent_synthesis",
+                        component=self.domain,
+                        status=(
+                            "deadline_exhausted"
+                            if isinstance(exc, TimeoutError)
+                            else "error"
+                        ),
+                        repair_status=str(
+                            context.get("repair_status") or "initial"
+                        ),
+                        model=str(getattr(self.llm, "default_model", "")),
+                        latency_sec=time.time() - start,
+                        deadline_exhausted=isinstance(exc, TimeoutError),
+                        error_type=type(exc).__name__,
+                    )
+                ],
             }
 
     # ------------------------------------------------------------------ #
@@ -440,6 +588,297 @@ class SubAgentGraph:
                 header += f" ({authors})"
             parts.append(f"[{i}]{header}\n{text}")
         return "\n\n".join(parts)
+
+    def _build_synthesis_context(
+        self,
+        results: List[Dict[str, Any]],
+        citations: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Record the exact ordered source text supplied to synthesis."""
+        from evaluation_core import stable_document_id
+
+        manifest: List[Dict[str, Any]] = []
+        for rank, result in enumerate(results, 1):
+            text = str(result.get("text") or "")
+            manifest.append(
+                {
+                    "document_id": stable_document_id(
+                        result, self.domain, rank
+                    ),
+                    "text": text,
+                    "start_char": 0,
+                    "original_length": len(text),
+                    "truncated": False,
+                    "citation_marker": rank,
+                }
+            )
+        return manifest
+
+    def _generation_telemetry(
+        self,
+        state: Dict[str, Any],
+        call_result: Any,
+        *,
+        stage: str = "agent_synthesis",
+    ) -> Dict[str, Any]:
+        """Map one structured completion into trace and event metadata."""
+        from runtime_verification.telemetry import build_attempt_event
+
+        context = state.get("context", {})
+        trace_id = str(context.get("trace_id") or "unknown")
+        attempt_id = str(
+            context.get("attempt_id") or f"{trace_id}:{self.domain}:1"
+        )
+        model_used = (
+            f"{call_result.model}@{call_result.model_revision}"
+            if call_result.model_revision
+            else call_result.model
+        )
+        return {
+            "model_used": model_used,
+            "stage_latency_sec": {
+                "generation": call_result.latency_sec,
+            },
+            "token_usage": {
+                "input": call_result.tokens_in,
+                "output": call_result.tokens_out,
+                "total": call_result.tokens_in + call_result.tokens_out,
+            },
+            "cost_breakdown_usd": {
+                "generation": call_result.cost_usd,
+            },
+            "attempt_events": [
+                build_attempt_event(
+                    trace_id=trace_id,
+                    attempt_id=attempt_id,
+                    parent_attempt_id=context.get("parent_attempt_id"),
+                    stage=stage,
+                    component=self.domain,
+                    status=str(call_result.status or "success"),
+                    repair_status=str(
+                        context.get("repair_status") or "initial"
+                    ),
+                    model=call_result.model,
+                    model_revision=call_result.model_revision,
+                    tokens_in=call_result.tokens_in,
+                    tokens_out=call_result.tokens_out,
+                    cost_usd=call_result.cost_usd,
+                    latency_sec=call_result.latency_sec,
+                    finish_reason=call_result.finish_reason,
+                    deadline_exhausted=(
+                        call_result.error_type
+                        == "RuntimeDeadlineExceeded"
+                    ),
+                    error_type=call_result.error_type,
+                    provider_metadata=call_result.provider_metadata,
+                )
+            ],
+        }
+
+    def _failure_telemetry(
+        self,
+        state: Dict[str, Any],
+        exc: BaseException,
+        *,
+        stage: str,
+        latency_sec: float,
+    ) -> Dict[str, Any]:
+        """Map a failed provider call into the canonical attempt schema."""
+        from llm_client import LLMCallResult
+        from runtime_verification.telemetry import build_attempt_event
+
+        context = state.get("context", {})
+        trace_id = str(context.get("trace_id") or "unknown")
+        attempt_id = str(
+            context.get("attempt_id") or f"{trace_id}:{self.domain}:1"
+        )
+        history_reader = getattr(self.llm, "thread_call_history", None)
+        history = (
+            list(history_reader() or [])
+            if callable(history_reader)
+            else list(history_reader or [])
+        )
+        history_start = context.get("_llm_history_start")
+        if (
+            isinstance(history_start, int)
+            and not isinstance(history_start, bool)
+            and history_start >= 0
+        ):
+            history = history[history_start:]
+        call_result = history[-1] if history else None
+        if not isinstance(call_result, LLMCallResult):
+            call_result = None
+        model = (
+            call_result.model
+            if call_result is not None
+            else str(getattr(self.llm, "default_model", "") or "")
+        )
+        model_revision = (
+            call_result.model_revision if call_result is not None else ""
+        )
+        model_used = (
+            f"{model}@{model_revision}" if model_revision else model
+        )
+        tokens_in = call_result.tokens_in if call_result is not None else 0
+        tokens_out = call_result.tokens_out if call_result is not None else 0
+        cost_usd = call_result.cost_usd if call_result is not None else 0.0
+        actual_latency = (
+            call_result.latency_sec
+            if call_result is not None
+            else latency_sec
+        )
+        error_type = (
+            call_result.error_type
+            if call_result is not None and call_result.error_type
+            else type(exc).__name__
+        )
+        deadline_exhausted = error_type == "RuntimeDeadlineExceeded"
+        return {
+            "model_used": model_used,
+            "stage_latency_sec": {"generation": actual_latency},
+            "token_usage": {
+                "input": tokens_in,
+                "output": tokens_out,
+                "total": tokens_in + tokens_out,
+            },
+            "cost_breakdown_usd": {"generation": cost_usd},
+            "attempt_events": [
+                build_attempt_event(
+                    trace_id=trace_id,
+                    attempt_id=attempt_id,
+                    parent_attempt_id=context.get("parent_attempt_id"),
+                    stage=stage,
+                    component=self.domain,
+                    status=(
+                        "deadline_exhausted"
+                        if deadline_exhausted
+                        else "error"
+                    ),
+                    repair_status=str(
+                        context.get("repair_status") or "initial"
+                    ),
+                    model=model,
+                    model_revision=model_revision,
+                    tokens_in=tokens_in,
+                    tokens_out=tokens_out,
+                    cost_usd=cost_usd,
+                    latency_sec=actual_latency,
+                    finish_reason=(
+                        call_result.finish_reason
+                        if call_result is not None
+                        else "error"
+                    ),
+                    deadline_exhausted=deadline_exhausted,
+                    error_type=error_type,
+                    provider_metadata=(
+                        call_result.provider_metadata
+                        if call_result is not None
+                        else None
+                    ),
+                )
+            ],
+        }
+
+    def _merge_llm_history_telemetry(
+        self, result: Dict[str, Any], context: Dict[str, Any]
+    ) -> None:
+        """Rebuild attempt telemetry from every physical provider call."""
+        from llm_client import LLMCallResult
+        from runtime_verification.telemetry import build_attempt_event
+
+        history_reader = getattr(self.llm, "thread_call_history", None)
+        if not callable(history_reader):
+            return
+
+        history = list(history_reader() or [])
+        history_start = context.get("_llm_history_start")
+        if (
+            isinstance(history_start, int)
+            and not isinstance(history_start, bool)
+            and history_start >= 0
+        ):
+            history = history[history_start:]
+
+        calls = [
+            call for call in history if isinstance(call, LLMCallResult)
+        ]
+        if not calls:
+            return
+
+        trace_id = str(context.get("trace_id") or "unknown")
+        attempt_id = str(
+            context.get("attempt_id") or f"{trace_id}:{self.domain}:1"
+        )
+        events: List[Dict[str, Any]] = []
+        tokens_in = 0
+        tokens_out = 0
+        total_cost = 0.0
+        stage_latency = dict(result.get("stage_latency_sec") or {})
+        cost_breakdown = dict(result.get("cost_breakdown_usd") or {})
+
+        for index, call in enumerate(calls, 1):
+            provider_attempt = int(
+                (call.provider_metadata or {}).get("provider_attempt")
+                or index
+            )
+            stage = str(
+                (call.provider_metadata or {}).get("telemetry_stage")
+                or "agent_llm_call"
+            )
+            event_id = (
+                f"{attempt_id}:{stage}:provider:{provider_attempt}"
+                if len(calls) > 1
+                else f"{attempt_id}:{stage}"
+            )
+            deadline_exhausted = (
+                call.error_type == "RuntimeDeadlineExceeded"
+            )
+            events.append(
+                build_attempt_event(
+                    trace_id=trace_id,
+                    attempt_id=attempt_id,
+                    parent_attempt_id=context.get("parent_attempt_id"),
+                    stage=stage,
+                    component=self.domain,
+                    status=(
+                        "deadline_exhausted"
+                        if deadline_exhausted
+                        else str(call.status or "success")
+                    ),
+                    repair_status=str(
+                        context.get("repair_status") or "initial"
+                    ),
+                    model=call.model,
+                    model_revision=call.model_revision,
+                    tokens_in=call.tokens_in,
+                    tokens_out=call.tokens_out,
+                    cost_usd=call.cost_usd,
+                    latency_sec=call.latency_sec,
+                    finish_reason=call.finish_reason,
+                    deadline_exhausted=deadline_exhausted,
+                    error_type=call.error_type,
+                    provider_metadata=call.provider_metadata,
+                    event_id=event_id,
+                )
+            )
+            tokens_in += int(call.tokens_in or 0)
+            tokens_out += int(call.tokens_out or 0)
+            total_cost += float(call.cost_usd or 0.0)
+            stage_latency[stage] = float(stage_latency.get(stage) or 0.0) + float(
+                call.latency_sec or 0.0
+            )
+            cost_breakdown[stage] = float(
+                cost_breakdown.get(stage) or 0.0
+            ) + float(call.cost_usd or 0.0)
+
+        result["attempt_events"] = events
+        result["token_usage"] = {
+            "input": tokens_in,
+            "output": tokens_out,
+            "total": tokens_in + tokens_out,
+        }
+        result["cost_breakdown_usd"] = cost_breakdown
+        result["stage_latency_sec"] = stage_latency
 
     def _extract_citations(self, results: List[Dict[str, Any]]) -> List[str]:
         """Build AMA-style citations from result metadata."""
@@ -479,6 +918,48 @@ class SubAgentGraph:
     # Public API
     # ------------------------------------------------------------------ #
 
+    def _output_from_result(
+        self,
+        *,
+        result: Dict[str, Any],
+        query: str,
+        context: Optional[Dict[str, Any]],
+        started_at: float,
+    ) -> AgentOutput:
+        """Create the stable output plus its backward-compatible trace sidecar."""
+        elapsed = time.time() - started_at
+        output = AgentOutput(
+            answer=result.get("answer", ""),
+            citations=result.get("citations", []),
+            confidence=result.get("confidence", 0.0),
+            sources=result.get("reranked_results", []),
+            model_used=result.get("model_used", ""),
+            domain=self.domain,
+            execution_time_sec=elapsed,
+            error=result.get("error"),
+        )
+
+        from evaluation_core import build_agent_evaluation_trace
+
+        trace_state = dict(result)
+        trace_state["execution_time_sec"] = elapsed
+        try:
+            output.evaluation_trace = build_agent_evaluation_trace(
+                agent_name=str((context or {}).get("agent_name") or self.domain),
+                domain=self.domain,
+                original_query=query,
+                state=trace_state,
+                context=context,
+            )
+        except Exception as exc:
+            logger.error(
+                "%s: evaluation trace adapter failed; preserving AgentOutput "
+                "error_type=%s",
+                self.domain,
+                safe_error_type(exc),
+            )
+        return output
+
     @serialized_invoke
     def invoke(
         self, query: str, context: Optional[Dict[str, Any]] = None
@@ -497,9 +978,16 @@ class SubAgentGraph:
         AgentOutput
         """
         start = time.time()
+        execution_context = dict(context or {})
+        history_reader = getattr(
+            self.llm, "thread_call_history", None
+        )
+        execution_context["_llm_history_start"] = (
+            len(history_reader()) if callable(history_reader) else 0
+        )
         initial_state: Dict[str, Any] = {
             "input_query": query,
-            "context": context or {},
+            "context": execution_context,
             "domain": self.domain,
             "expanded_query": "",
             "retrieval_results": [],
@@ -509,21 +997,23 @@ class SubAgentGraph:
             "citations": [],
             "confidence": 0.0,
             "model_used": "",
+            "synthesis_context": [],
+            "stage_latency_sec": {},
+            "token_usage": {},
+            "cost_breakdown_usd": {},
+            "attempt_events": [],
             "error": None,
             "execution_time_sec": 0.0,
         }
 
         result = self.graph.invoke(initial_state)
+        self._merge_llm_history_telemetry(result, execution_context)
 
-        return AgentOutput(
-            answer=result.get("answer", ""),
-            citations=result.get("citations", []),
-            confidence=result.get("confidence", 0.0),
-            sources=result.get("reranked_results", []),
-            model_used=result.get("model_used", ""),
-            domain=self.domain,
-            execution_time_sec=time.time() - start,
-            error=result.get("error"),
+        return self._output_from_result(
+            result=result,
+            query=query,
+            context=execution_context,
+            started_at=start,
         )
 
     def get_summary(self) -> str:

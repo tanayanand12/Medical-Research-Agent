@@ -9,9 +9,14 @@ All LLM calls route through LLMClient (no hardcoded OpenAI).
 
 import json
 import logging
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from llm_client import LLMClient
+from evaluation_core import (
+    RuntimeDeadlineExceeded,
+    stable_query_fingerprint,
+)
+from runtime_verification.telemetry import call_llm_with_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -62,10 +67,16 @@ class QueryClassifier:
             singleton.
         """
         self._llm = llm_client or LLMClient()
+        self.last_call_result = None
 
     # ---- Phase 4 interface ------------------------------------------------
 
-    def classify_with_reason(self, query: str) -> Tuple[bool, float, str]:
+    def classify_with_reason(
+        self,
+        query: str,
+        *,
+        llm_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[bool, float, str]:
         """Classify a query and return structured result.
 
         This is the interface expected by the LangGraph classify_intent node.
@@ -80,14 +91,21 @@ class QueryClassifier:
         tuple[bool, float, str]
             (is_medical, confidence, reason)
         """
-        is_medical, details = self.is_medical_research_query(query)
+        is_medical, details = self.is_medical_research_query(
+            query, llm_kwargs=llm_kwargs
+        )
         confidence = details.get("confidence", 0.5)
         reason = details.get("reason", "")
         return is_medical, confidence, reason
 
     # ---- legacy-compatible interface --------------------------------------
 
-    def is_medical_research_query(self, query: str) -> Tuple[bool, Dict]:
+    def is_medical_research_query(
+        self,
+        query: str,
+        *,
+        llm_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[bool, Dict]:
         """Determine if a query is related to medical research.
 
         Parameters
@@ -110,33 +128,60 @@ class QueryClassifier:
         )
 
         try:
-            raw = self._llm.chat(
+            self.last_call_result = call_llm_with_metadata(
+                self._llm,
                 messages=[
                     {"role": "system", "content": CLASSIFICATION_SYSTEM_PROMPT},
                     {"role": "user", "content": user_message},
                 ],
                 temperature=0.1,
                 max_tokens=256,
+                **dict(llm_kwargs or {}),
             )
+            raw = self.last_call_result.text
 
             classification = self._parse_classification(raw)
             is_medical = classification.get("is_medical_research", True)
 
             logger.info(
-                "Query classified: is_medical=%s, query=%s", is_medical, query
+                "Query classified is_medical=%s query_sha256=%s "
+                "query_length=%d",
+                is_medical,
+                stable_query_fingerprint(query),
+                len(query),
             )
             return is_medical, classification
 
+        except RuntimeDeadlineExceeded:
+            history_reader = getattr(
+                self._llm, "thread_call_history", None
+            )
+            if callable(history_reader):
+                history = list(history_reader() or [])
+                if history:
+                    self.last_call_result = history[-1]
+            raise
         except Exception as e:
+            history_reader = getattr(
+                self._llm, "thread_call_history", None
+            )
+            if callable(history_reader):
+                history = list(history_reader() or [])
+                if history:
+                    self.last_call_result = history[-1]
             logger.error(
-                "Error in LLM classification: %s", str(e), exc_info=True
+                "LLM classification failed error_type=%s",
+                type(e).__name__,
             )
             # Default to medical to avoid false negatives
             fallback = {
                 "is_medical_research": True,
                 "confidence": 0.99,
                 "domain": "medical_research",
-                "reason": f"Error in classification process: {str(e)}",
+                "reason": (
+                    "Classification provider failed; conservatively treating "
+                    "the query as medical."
+                ),
             }
             return True, fallback
 
@@ -174,7 +219,11 @@ class QueryClassifier:
             "classification": classification,
         }
 
-        logger.info("Generated non-medical response for query: %s", query)
+        logger.info(
+            "Generated non-medical response query_sha256=%s query_length=%d",
+            stable_query_fingerprint(query),
+            len(query),
+        )
         return response
 
     # ---- helpers ----------------------------------------------------------
@@ -189,7 +238,8 @@ class QueryClassifier:
             return json.loads(raw)
         except json.JSONDecodeError:
             logger.error(
-                "Failed to parse LLM classification response: %s", raw
+                "Failed to parse LLM classification response "
+                "error_type=JSONDecodeError"
             )
             return {
                 "is_medical_research": True,

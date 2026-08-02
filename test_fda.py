@@ -17,6 +17,13 @@ Requirements:
     - agents.base with SubAgentGraph, AgentOutput, load_prompt, _RetrievalDoc.
 """
 
+if __name__ != "__main__":
+    import pytest
+
+    pytest.skip(
+        "manual online FDA provider smoke script", allow_module_level=True
+    )
+
 from dotenv import load_dotenv  # type: ignore
 load_dotenv()
 

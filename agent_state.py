@@ -37,6 +37,9 @@ class AgentState(TypedDict):
     - top_k: int (default 5) — documents to retrieve per tool
     - model_id: str (default "gpt-4o") — LLM model for this query
     - agents_to_use: List[str] (optional) — explicit agent names, overrides discovery
+    - max_agent_retries: int — bounded retrieval retries per sub-agent
+    - max_agent_synthesis_repairs: int — frozen-evidence repairs per sub-agent
+    - max_synthesis_repairs: int — top-level frozen-evidence repairs
     - Other backend-specific parameters (db_name, max_trials, etc.)
     """
 
@@ -125,6 +128,9 @@ class AgentState(TypedDict):
     total_retrieval_time_sec: float
     """Sum of all retrieval times."""
 
+    runtime_executor_metrics: Dict[str, Any]
+    """Bounded worker capacity, saturation, completion, and timeout counters."""
+
     # ============================================================================
     # SYNTHESIS STAGE
     # ============================================================================
@@ -156,6 +162,12 @@ class AgentState(TypedDict):
     synthesis_time_sec: float
     """LLM call latency."""
 
+    last_synthesis_cost_usd: float
+    """Cost of the latest synthesis call; used for per-attempt trace accounting."""
+
+    synthesis_context: List[Dict[str, Any]]
+    """Ordered evidence spans actually supplied to synthesis/repair."""
+
     # ============================================================================
     # SCORING STAGE
     # ============================================================================
@@ -170,24 +182,37 @@ class AgentState(TypedDict):
     coverage_explanation: str
     """Human-readable explanation of confidence score."""
 
+    confidence_components: Dict[str, float]
+    """
+    Separate qrel-free runtime quality components.
+    """
+
+    runtime_quality_score: float
+    """
+    Documented weighted combination of confidence_components. This is not a
+    clinically calibrated probability and does not replace confidence_score.
+    """
+
+    runtime_quality_explanation: str
+    """Formula description for runtime_quality_score."""
+
     # ============================================================================
     # COHERENCE EVALUATION STAGE
     # ============================================================================
 
     coherence_score: float
     """
-    LLM-based coherence judgment [0, 1].
-    Evaluates whether the synthesized answer is clinically coherent,
-    logically consistent, and grounded in retrieved documents.
+    Backward-compatible routing score populated from runtime quality [0, 1].
+    It is not a clinically calibrated coherence probability.
     """
 
     coherence_explanation: str
-    """LLM's explanation of coherence score."""
+    """Runtime verifier status, failed checks, and score formula."""
 
     should_fallback: bool
     """
-    True if coherence_score < 0.6 AND fallback_count < 1.
-    Triggers fallback_regen node.
+    True when a valid runtime decision requests synthesis repair. Missing or
+    malformed decisions conservatively use the legacy coherence threshold.
     """
 
     coherence_eval_model_used: str
@@ -214,6 +239,31 @@ class AgentState(TypedDict):
     Explanation of why fallback was triggered.
     Example: "coherence_score=0.45 < threshold=0.6"
     """
+
+    # ============================================================================
+    # SHARED EVALUATION TRACE / RUNTIME VERIFICATION
+    # ============================================================================
+
+    evaluation_traces: List[Dict[str, Any]]
+    """Versioned per-attempt sidecar traces; never contains benchmark qrels."""
+
+    verification_history: List[Dict[str, Any]]
+    """All agent and synthesis VerificationDecision records."""
+
+    verification_decision: Optional[Dict[str, Any]]
+    """Latest VerificationDecision used for bounded routing."""
+
+    repair_history: List[Dict[str, Any]]
+    """Structured feedback and applied changes for bounded retries/repairs."""
+
+    evidence_limited: bool
+    """True when available evidence or verification is insufficient."""
+
+    attempt_telemetry: List[Dict[str, Any]]
+    """Per-attempt model, tokens, cost, and compute latency."""
+
+    token_usage: Dict[str, int]
+    """Aggregate input/output/total tokens across recorded attempts."""
 
     # ============================================================================
     # FORMATTING STAGE

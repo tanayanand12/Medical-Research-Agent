@@ -14,6 +14,7 @@ where ``rank_i(d)`` is the rank of document *d* in result list *i*.
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
+from evaluation_core import RuntimeDeadlineExceeded
 
 from rag_engine.dense_index import DenseIndex, DenseResult
 from rag_engine.sparse_index import BM25Index, SparseResult
@@ -73,7 +74,13 @@ class HybridRetriever:
     # Public API
     # ------------------------------------------------------------------ #
 
-    def retrieve(self, query: str, top_k: int = 10) -> List[RetrievalResult]:
+    def retrieve(
+        self,
+        query: str,
+        top_k: int = 10,
+        *,
+        deadline_at: Optional[float] = None,
+    ) -> List[RetrievalResult]:
         """Retrieve documents using RRF fusion of dense + sparse results.
 
         Parameters
@@ -95,11 +102,19 @@ class HybridRetriever:
         dense_results: List[DenseResult] = []
         if self._dense is not None and self._embedder is not None:
             try:
-                query_vector = self._embedder.embed(query)
+                query_vector = self._embedder.embed(
+                    query,
+                    deadline_at=deadline_at,
+                    client_max_attempts=1 if deadline_at is not None else None,
+                )
                 dense_results = self._dense.search(query_vector, top_k=fetch_k)
+            except RuntimeDeadlineExceeded:
+                raise
             except Exception as exc:
                 logger.warning(
-                    "Dense retrieval unavailable; continuing with BM25: %s", exc
+                    "Dense retrieval unavailable; continuing with BM25 "
+                    "error_type=%s",
+                    type(exc).__name__,
                 )
 
         # Sparse retrieval

@@ -102,8 +102,12 @@ class FDATool(MCPToolBase):
                 return self._call_pipeline(query, top_k, max_records, start)
             return self._call_llm_client(query, top_k, start)
         except Exception as exc:
-            logger.error("search_fda failed: %s", exc, exc_info=True)
-            return self._error(str(exc), time.time() - start)
+            error_type = type(exc).__name__
+            logger.error("search_fda failed error_type=%s", error_type)
+            return self._error(
+                f"search_fda_failed:{error_type}",
+                time.time() - start,
+            )
 
     # ------------------------------------------------------------------ #
     # Path A: legacy pipeline available
@@ -112,31 +116,11 @@ class FDATool(MCPToolBase):
     def _call_pipeline(
         self, query: str, top_k: int, max_records: int, start: float
     ) -> Dict[str, Any]:
-        self._ensure_pipeline(max_records)
-
-        if max_records != self._pipeline.max_records:  # type: ignore[union-attr]
-            self._pipeline.max_records = max_records  # type: ignore[union-attr]
-
-        result = self._pipeline.process_query(query=query, top_k=top_k)  # type: ignore[union-attr]
-        elapsed = time.time() - start
-
-        if not result.get("success", False):
-            return self._error(
-                result.get("error", "Unknown FDA pipeline error"), elapsed
-            )
-
-        answer = result.get("answer", "")
-        citations = self._normalise_citations(result.get("citations", []))
-        confidence = self._calculate_confidence(result, elapsed)
-
-        return self._success(
-            results=[{"citation": c} for c in citations],
-            tokens_used=result.get("tokens_used", 0),
-            cost=result.get("cost", 0.0),
-            retrieval_time_sec=elapsed,
-            answer=answer,
-            citations=citations,
-            confidence=confidence,
+        # The legacy answer-only pipeline cannot expose its exact synthesis
+        # context, so invoking it would perform unverifiable work.
+        return self._error(
+            "fda_pipeline_exact_context_unavailable",
+            time.time() - start,
         )
 
     # ------------------------------------------------------------------ #
@@ -146,36 +130,10 @@ class FDATool(MCPToolBase):
     def _call_llm_client(
         self, query: str, top_k: int, start: float
     ) -> Dict[str, Any]:
-        """Fallback when the legacy FDA pipeline is not yet migrated.
-
-        Uses LLMClient to synthesise a response acknowledging that
-        the FDA index is not yet available locally.
-        """
-        llm = self._get_llm_client()
-
-        answer = llm.chat(
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are an FDA regulatory data assistant. The local FDA "
-                        "RAG index is not yet available. Provide a helpful response "
-                        "based on your training knowledge about FDA data, and note "
-                        "that results are not grounded in a local index."
-                    ),
-                },
-                {"role": "user", "content": query},
-            ],
-            temperature=0.3,
-        )
-
-        elapsed = time.time() - start
-        return self._success(
-            results=[],
-            retrieval_time_sec=elapsed,
-            answer=answer,
-            citations=[],
-            confidence=0.4,
+        """Fail closed when no evidence-producing backend is available."""
+        return self._error(
+            "fda_retrieval_backend_unavailable",
+            time.time() - start,
         )
 
     # ------------------------------------------------------------------ #

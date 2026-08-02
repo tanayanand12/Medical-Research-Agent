@@ -1,4 +1,12 @@
-﻿from dotenv import load_dotenv # type: ignore 
+﻿if __name__ != "__main__":
+    import pytest
+
+    pytest.skip(
+        "manual online ClinicalTrials provider smoke script",
+        allow_module_level=True,
+    )
+
+from dotenv import load_dotenv  # type: ignore
 load_dotenv()
 
 from agents.clinical_trials_agent.graph import ClinicalTrialsAgentGraph

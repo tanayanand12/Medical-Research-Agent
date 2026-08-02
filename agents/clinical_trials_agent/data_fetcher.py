@@ -29,6 +29,13 @@ from urllib.parse import quote_plus
 
 import requests  # type: ignore
 from pydantic import BaseModel, field_validator # type: ignore
+from evaluation_core import safe_error_type, stable_query_fingerprint
+from runtime_verification.deadline import (
+    RuntimeDeadlineExceeded,
+    ensure_deadline,
+    remaining_seconds,
+    sleep_with_deadline,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -290,6 +297,8 @@ class ClinicalTrialsFetcher:
         user_query: str,
         max_retries: int = 2,
         wait_seconds: int = 1,
+        llm_kwargs: Optional[Dict[str, Any]] = None,
+        deadline_at: Optional[float] = None,
     ) -> SearchTerms:
         """Extract search terms - tries LLM first, falls back to keyword extraction."""
         
@@ -303,12 +312,17 @@ class ClinicalTrialsFetcher:
             f"synonym: antidiabetic"
         )
         
-        for attempt in range(max_retries):
+        llm_kwargs = dict(llm_kwargs or {})
+        deadline_at = deadline_at or llm_kwargs.get("deadline_at")
+        attempts = 1 if llm_kwargs else max_retries
+        for attempt in range(attempts):
+            ensure_deadline(deadline_at)
             try:
                 raw = self.llm.chat(
                     messages=[{"role": "user", "content": simple_prompt}],
                     temperature=0.1,
                     max_tokens=150,
+                    **llm_kwargs,
                 )
                 
                 # Parse key: value1, value2 format
@@ -335,10 +349,16 @@ class ClinicalTrialsFetcher:
                     logger.info("LLM extracted %d terms", len(terms.all_terms))
                     return terms
                     
+            except RuntimeDeadlineExceeded:
+                raise
             except Exception as e:
-                logger.warning("LLM extraction attempt %d failed: %s", attempt + 1, e)
-                if attempt < max_retries - 1:
-                    time.sleep(wait_seconds)
+                logger.warning(
+                    "LLM extraction attempt %d failed error_type=%s",
+                    attempt + 1,
+                    safe_error_type(e),
+                )
+                if attempt < attempts - 1:
+                    sleep_with_deadline(wait_seconds, deadline_at)
         
         # Always-reliable fallback
         logger.warning("Using keyword fallback for term extraction")
@@ -419,7 +439,10 @@ class ClinicalTrialsFetcher:
     # ------------------------------------------------------------------ #
 
     def fetch_clinical_trials_data(
-        self, urls: List[str]
+        self,
+        urls: List[str],
+        *,
+        deadline_at: Optional[float] = None,
     ) -> Tuple[Dict[str, Any], List[str]]:
         """Fetch studies from a list of ClinicalTrials.gov API URLs.
 
@@ -439,12 +462,19 @@ class ClinicalTrialsFetcher:
         failed: List[str] = []
 
         for url in urls:
+            ensure_deadline(deadline_at)
             try:
-                resp = requests.get(url, timeout=30)
+                resp = requests.get(
+                    url,
+                    timeout=remaining_seconds(deadline_at, default=30),
+                )
                 resp.raise_for_status()
 
                 if "application/json" not in resp.headers.get("Content-Type", ""):
-                    logger.warning("Non-JSON response from %s", url)
+                    logger.warning(
+                        "ClinicalTrials non-JSON response url_sha256=%s",
+                        stable_query_fingerprint(url),
+                    )
                     failed.append(url)
                     continue
 
@@ -454,16 +484,34 @@ class ClinicalTrialsFetcher:
 
                 if total > 0 and studies:
                     accessible[url] = data
-                    logger.info("Fetched %d studies from %s", total, url)
+                    logger.info(
+                        "Fetched %d studies url_sha256=%s",
+                        total,
+                        stable_query_fingerprint(url),
+                    )
                 else:
-                    logger.warning("Empty result set from %s (totalCount=%d)", url, total)
+                    logger.warning(
+                        "ClinicalTrials empty result url_sha256=%s total=%d",
+                        stable_query_fingerprint(url),
+                        total,
+                    )
                     failed.append(url)
 
+            except RuntimeDeadlineExceeded:
+                raise
             except requests.exceptions.RequestException as e:
-                logger.error("Could not access URL %s: %s", url, e)
+                logger.error(
+                    "ClinicalTrials request failed url_sha256=%s error_type=%s",
+                    stable_query_fingerprint(url),
+                    safe_error_type(e),
+                )
                 failed.append(url)
             except Exception as e:
-                logger.error("Unexpected error for URL %s: %s", url, e)
+                logger.error(
+                    "ClinicalTrials fetch failed url_sha256=%s error_type=%s",
+                    stable_query_fingerprint(url),
+                    safe_error_type(e),
+                )
                 failed.append(url)
 
         return accessible, failed
@@ -505,7 +553,10 @@ class ClinicalTrialsFetcher:
                     if nct_id and nct_id not in unique:
                         unique[nct_id] = study
                 except Exception as e:
-                    logger.warning("Error deduplicating study: %s", e)
+                    logger.warning(
+                        "Error deduplicating study error_type=%s",
+                        safe_error_type(e),
+                    )
 
         logger.info(
             "Collated %d unique studies from %d sources",
@@ -527,6 +578,8 @@ class ClinicalTrialsFetcher:
         self,
         user_input: str,
         retry_broad: bool = True,
+        llm_kwargs: Optional[Dict[str, Any]] = None,
+        deadline_at: Optional[float] = None,
     ) -> Dict[str, Any]:
         """Analyse a natural language query and fetch matching clinical trials.
 
@@ -552,26 +605,41 @@ class ClinicalTrialsFetcher:
             source_url, all_source_urls, failed_urls, attempted_urls,
             query_analysis.
         """
-        logger.info("Analyzing query: %s", user_input)
-
+        deadline_at = deadline_at or dict(llm_kwargs or {}).get(
+            "deadline_at"
+        )
         try:
+            ensure_deadline(deadline_at)
             # Step 1: Extract concepts
-            terms = self.extract_search_terms(user_input)
-            logger.info("Search terms: %s", terms.model_dump())
+            terms = self.extract_search_terms(
+                user_input,
+                llm_kwargs=llm_kwargs,
+                deadline_at=deadline_at,
+            )
+            logger.info(
+                "ClinicalTrials term extraction complete term_count=%d",
+                len(terms.all_terms),
+            )
 
             # Step 2: Build URLs
             urls = self.build_urls(terms)
 
             # Step 3: Fetch
-            accessible, failed = self.fetch_clinical_trials_data(urls)
+            ensure_deadline(deadline_at)
+            accessible, failed = self.fetch_clinical_trials_data(
+                urls, deadline_at=deadline_at
+            )
 
             # Step 4: Retry with broad mode on total failure
             if not accessible and retry_broad and terms.all_terms:
+                ensure_deadline(deadline_at)
                 logger.warning(
                     "All URLs returned empty. Retrying in broad mode..."
                 )
                 broad_urls = self.build_urls(terms, broad_mode=True)
-                accessible, failed_broad = self.fetch_clinical_trials_data(broad_urls)
+                accessible, failed_broad = self.fetch_clinical_trials_data(
+                    broad_urls, deadline_at=deadline_at
+                )
                 failed += failed_broad
                 urls += broad_urls
 
@@ -608,11 +676,26 @@ class ClinicalTrialsFetcher:
                 },
             }
 
-        except Exception as e:
-            logger.error("Error in analyze_user_query: %s", e)
+        except RuntimeDeadlineExceeded as e:
             return {
                 "success": False,
-                "error": str(e),
+                "error": "runtime_deadline_exhausted",
+                "error_type": "runtime_deadline_exhausted",
+                "data": None,
+                "total_count": 0,
+                "source_url": "",
+            }
+        except Exception as e:
+            logger.error(
+                "ClinicalTrials query analysis failed error_type=%s",
+                safe_error_type(e),
+            )
+            return {
+                "success": False,
+                "error": (
+                    f"clinical_trials_query_failed:{safe_error_type(e)}"
+                ),
+                "error_type": safe_error_type(e),
                 "data": None,
                 "total_count": 0,
                 "source_url": "",

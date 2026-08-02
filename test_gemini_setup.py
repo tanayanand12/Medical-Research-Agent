@@ -61,32 +61,38 @@ def try_ollama_embed(retries=2):
     return None
 
 
-print("=" * 55)
-print("  Medical Research Agent — provider check")
-print("=" * 55)
+def main():
+    """Run the provider smoke check manually, never during pytest collection."""
+    print("=" * 55)
+    print("  Medical Research Agent — provider check")
+    print("=" * 55)
 
-print("\n[1] LLM — Gemini API (synthesis, query expansion)")
-llm = try_llm(LLM_CASCADE)
+    print("\n[1] LLM — Gemini API (synthesis, query expansion)")
+    llm = try_llm(LLM_CASCADE)
 
-print("\n[2] Embeddings — Ollama local (chunk indexing)")
-dim = try_ollama_embed()
+    print("\n[2] Embeddings — Ollama local (chunk indexing)")
+    dim = try_ollama_embed()
 
-print("\n" + "=" * 55)
-if llm and dim:
-    print("  ✅ PASS")
-    print(f"\n  Confirmed working config:")
-    print(f"  DEFAULT_LLM_MODEL={llm}")
-    print(f"  DEFAULT_EMBEDDING_MODEL=ollama/nomic-embed-text")
-    print(f"  Embedding dimensions: {dim}d")
-    print(f"\n  Expected speedup vs full-Ollama:")
-    print(f"  Synthesis: ~600s → ~5s  (Gemini Flash-Lite)")
-    print(f"  Embeddings: unchanged  (already fast locally)")
-else:
-    issues = []
-    if not llm:
-        issues.append("Gemini LLM — check GEMINI_API_KEY")
-    if not dim:
-        issues.append("Ollama embed — is Ollama running? (ollama serve)")
-    for i in issues:
-        print(f"  ❌ {i}")
-print("=" * 55)
+    print("\n" + "=" * 55)
+    if llm and dim:
+        print("  ✅ PASS")
+        print("\n  Confirmed working config:")
+        print(f"  DEFAULT_LLM_MODEL={llm}")
+        print("  DEFAULT_EMBEDDING_MODEL=ollama/nomic-embed-text")
+        print(f"  Embedding dimensions: {dim}d")
+        print("\n  Expected speedup vs full-Ollama:")
+        print("  Synthesis: ~600s → ~5s  (Gemini Flash-Lite)")
+        print("  Embeddings: unchanged  (already fast locally)")
+    else:
+        issues = []
+        if not llm:
+            issues.append("Gemini LLM — check GEMINI_API_KEY")
+        if not dim:
+            issues.append("Ollama embed — is Ollama running? (ollama serve)")
+        for issue in issues:
+            print(f"  ❌ {issue}")
+    print("=" * 55)
+
+
+if __name__ == "__main__":
+    main()

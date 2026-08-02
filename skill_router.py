@@ -17,6 +17,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
+from evaluation_core import (
+    RuntimeDeadlineExceeded,
+    stable_query_fingerprint,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -160,6 +164,7 @@ class SkillRouter:
         query: str,
         top_k: int = 3,
         min_threshold: float = 0.1,
+        deadline_at: Optional[float] = None,
     ) -> Tuple[List[str], List[float]]:
         """Rank all loaded tools by relevance to *query*.
 
@@ -184,7 +189,7 @@ class SkillRouter:
 
         scored: List[Tuple[str, float]] = []
         for tool_name, manifest in self._manifests.items():
-            score = self._score(query, manifest)
+            score = self._score(query, manifest, deadline_at=deadline_at)
             scored.append((tool_name, score))
 
         # Sort descending by score
@@ -206,8 +211,9 @@ class SkillRouter:
         scores = [round(s, 4) for _, s in selected]
 
         logger.info(
-            "SkillRouter: query=%r → %s",
-            query[:60],
+            "SkillRouter: query_sha256=%s query_length=%d tools=%s",
+            stable_query_fingerprint(query),
+            len(query),
             list(zip(names, scores)),
         )
         return names, scores
@@ -233,11 +239,23 @@ class SkillRouter:
     # Scoring
     # ------------------------------------------------------------------
 
-    def _score(self, query: str, manifest: Dict[str, Any]) -> float:
+    def _score(
+        self,
+        query: str,
+        manifest: Dict[str, Any],
+        *,
+        deadline_at: Optional[float] = None,
+    ) -> float:
         """Compute composite relevance score for a query–manifest pair."""
         kw_score = self._keyword_score(query, manifest)
         dom_score = self._domain_score(query, manifest)
-        sem_score = self._semantic_score(query, manifest)
+        sem_score = (
+            self._semantic_score(query, manifest)
+            if deadline_at is None
+            else self._semantic_score(
+                query, manifest, deadline_at=deadline_at
+            )
+        )
         priority_score = self._priority_keyword_score(query, manifest)
 
         if sem_score is not None:
@@ -325,14 +343,23 @@ class SkillRouter:
     # -- semantic scoring -----------------------------------------------
 
     def _semantic_score(
-        self, query: str, manifest: Dict[str, Any]
+        self,
+        query: str,
+        manifest: Dict[str, Any],
+        *,
+        deadline_at: Optional[float] = None,
     ) -> Optional[float]:
         """Compute cosine similarity between query and skill description embeddings.
 
         Returns ``None`` if embedding is unavailable (no API key, model
         error, etc.), causing the caller to fall back to keyword+domain only.
         """
-        if not self._is_embedding_available():
+        embedding_available = (
+            self._is_embedding_available()
+            if deadline_at is None
+            else self._is_embedding_available(deadline_at=deadline_at)
+        )
+        if not embedding_available:
             return None
 
         try:
@@ -340,17 +367,38 @@ class SkillRouter:
             if query not in self._query_embedding_cache:
                 if len(self._query_embedding_cache) >= 128:
                     self._query_embedding_cache.clear()
-                self._query_embedding_cache[query] = client.embed(query)
+                self._query_embedding_cache[query] = (
+                    client.embed(query)
+                    if deadline_at is None
+                    else client.embed(
+                        query,
+                        deadline_at=deadline_at,
+                        client_max_attempts=1,
+                    )
+                )
             query_vec = self._query_embedding_cache[query]
 
             desc = manifest.get("description", "")
             if desc not in self._embedding_cache:
-                self._embedding_cache[desc] = client.embed(desc)
+                self._embedding_cache[desc] = (
+                    client.embed(desc)
+                    if deadline_at is None
+                    else client.embed(
+                        desc,
+                        deadline_at=deadline_at,
+                        client_max_attempts=1,
+                    )
+                )
             desc_vec = self._embedding_cache[desc]
 
             return self._cosine_similarity(query_vec, desc_vec)
+        except RuntimeDeadlineExceeded:
+            raise
         except Exception as exc:
-            logger.debug("SkillRouter: semantic scoring failed: %s", exc)
+            logger.debug(
+                "SkillRouter: semantic scoring failed error_type=%s",
+                type(exc).__name__,
+            )
             return None
 
     # ------------------------------------------------------------------
@@ -390,15 +438,26 @@ class SkillRouter:
             self._llm_client = LLMClient()
         return self._llm_client
 
-    def _is_embedding_available(self) -> bool:
+    def _is_embedding_available(
+        self, *, deadline_at: Optional[float] = None
+    ) -> bool:
         """Check once whether embedding calls succeed."""
         if self._embedding_available is not None:
             return self._embedding_available
 
         try:
             client = self._get_llm_client()
-            client.embed("test")
+            if deadline_at is None:
+                client.embed("test")
+            else:
+                client.embed(
+                    "test",
+                    deadline_at=deadline_at,
+                    client_max_attempts=1,
+                )
             self._embedding_available = True
+        except RuntimeDeadlineExceeded:
+            raise
         except Exception:
             self._embedding_available = False
             logger.info(

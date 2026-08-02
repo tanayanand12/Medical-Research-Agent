@@ -5,9 +5,17 @@ Defines decision logic for which node executes after certain nodes.
 """
 
 from agent_state import AgentState
+from runtime_verification import evidence_limited_answer
 import logging
 
 logger = logging.getLogger(__name__)
+
+_RECOGNIZED_VERIFICATION_STATUSES = {
+    "accept",
+    "retry_retrieval",
+    "retry_synthesis",
+    "evidence_limited",
+}
 
 
 def after_classify_intent(state: AgentState) -> str:
@@ -62,14 +70,41 @@ def after_evaluate_coherence(state: AgentState) -> str:
     trace_id = state.get("trace_id", "unknown")
     coherence = state["coherence_score"]
     fallback_count = state["fallback_count"]
+    max_fallbacks = max(
+        0,
+        min(
+            1,
+            int(state.get("context", {}).get("max_synthesis_repairs", 1)),
+        ),
+    )
     coherence_threshold = 0.6
+    verification_decision = state.get("verification_decision")
+    decision_is_valid = (
+        isinstance(verification_decision, dict)
+        and verification_decision.get("status")
+        in _RECOGNIZED_VERIFICATION_STATUSES
+        and verification_decision.get("valid") is True
+    )
+    if decision_is_valid:
+        should_repair = (
+            verification_decision.get("status") == "retry_synthesis"
+        )
+        routing_source = "runtime_verifier"
+    else:
+        # Conservative compatibility policy: absent, empty, malformed, or
+        # unavailable verifier state falls back to the legacy coherence gate.
+        should_repair = bool(state.get("should_fallback")) or (
+            coherence < coherence_threshold
+        )
+        routing_source = "legacy_coherence"
 
-    if coherence < coherence_threshold and fallback_count < 1:
+    if should_repair and fallback_count < max_fallbacks:
         logger.info(
             f"[{trace_id}] Coherence score ({coherence:.2f}) < threshold ({coherence_threshold}). "
             f"Fallback count: {fallback_count}. "
             f"Triggering fallback regeneration. "
-            f"Reason: {state['coherence_explanation']}"
+            f"Reason: {state['coherence_explanation']}. "
+            f"Routing source: {routing_source}"
         )
         state["should_fallback"] = True
         state["fallback_reason"] = (
@@ -77,16 +112,25 @@ def after_evaluate_coherence(state: AgentState) -> str:
         )
         return "fallback_regen"
 
-    if coherence < coherence_threshold and fallback_count >= 1:
+    if should_repair and fallback_count >= max_fallbacks:
         logger.warning(
             f"[{trace_id}] Coherence score ({coherence:.2f}) is low, "
             f"but fallback already attempted {fallback_count} time(s). "
             f"Skipping further fallback and proceeding to format_response."
         )
         state["should_fallback"] = False
+        state["evidence_limited"] = True
+        state["is_partial_response"] = True
+        state["intermediate_answer"] = evidence_limited_answer(
+            "Runtime verification could not complete synthesis repair "
+            "within the repair budget."
+        )
 
     logger.info(
-        f"[{trace_id}] Coherence score ({coherence:.2f}) >= threshold. "
-        f"Proceeding directly to format_response."
+        "[%s] Proceeding directly to format_response "
+        "(coherence=%.2f, routing_source=%s).",
+        trace_id,
+        coherence,
+        routing_source,
     )
     return "format_response"

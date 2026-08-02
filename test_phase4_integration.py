@@ -12,12 +12,14 @@ Tests that:
 
 import pytest
 import asyncio
+import importlib
 from datetime import datetime
 from unittest.mock import Mock, patch, MagicMock
 
 from agent_state import AgentState
 from graph import get_graph, build_graph
 from edges import after_classify_intent, after_evaluate_coherence
+from llm_client import LLMCallResult, LLMClient
 
 
 # ============================================================================
@@ -166,6 +168,8 @@ def test_after_evaluate_coherence_low_coherence_already_tried(sample_initial_sta
     next_node = after_evaluate_coherence(state)
     assert next_node == "format_response"
     assert state["should_fallback"] is False
+    assert state["evidence_limited"] is True
+    assert "insufficient evidence" in state["intermediate_answer"].lower()
 
 
 # ============================================================================
@@ -255,6 +259,47 @@ def test_discover_skills_node_with_mock(sample_initial_state):
         assert result_state["discovered_skills"] == ["local", "pubmed", "clinical_trials"]
         assert len(result_state["skill_scores"]) == 3
         assert result_state["skill_scores"]["local"] == 0.95
+
+
+def test_discover_skills_records_structured_embedding_telemetry(
+    sample_initial_state, monkeypatch
+):
+    discover_module = importlib.import_module("nodes.discover_skills")
+
+    class _Router:
+        def rank_tools(self, **_kwargs):
+            LLMClient()._record_call_result(
+                LLMCallResult(
+                    text="",
+                    model="embedding-model",
+                    model_revision="r1",
+                    tokens_in=7,
+                    tokens_out=0,
+                    cost_usd=0.002,
+                    latency_sec=0.03,
+                    finish_reason="embedded",
+                    provider_metadata={
+                        "provider": "mock",
+                        "telemetry_stage": "embedding",
+                    },
+                )
+            )
+            return ["search_pubmed"], [0.9]
+
+    monkeypatch.setattr(discover_module, "SkillRouter", _Router)
+    result_state = discover_module.discover_skills(
+        sample_initial_state
+    )
+
+    assert result_state["token_usage"] == {
+        "input": 7,
+        "output": 0,
+        "total": 7,
+    }
+    assert result_state["cost_estimate"] == pytest.approx(0.002)
+    event = result_state["attempt_telemetry"][-1]
+    assert event["stage"] == "skill_discovery_embedding"
+    assert event["model"] == "embedding-model"
 
 
 def test_score_confidence_node(sample_initial_state):
@@ -394,7 +439,7 @@ def test_discover_skills_fallback_on_error(sample_initial_state):
 
         # Should fall back to all tools
         assert len(result_state["discovered_skills"]) == 5
-        assert "local" in result_state["discovered_skills"]
+        assert "search_local_index" in result_state["discovered_skills"]
 
 
 # ============================================================================

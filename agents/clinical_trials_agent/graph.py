@@ -37,11 +37,14 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, TypedDict
 
 from langgraph.graph import END, StateGraph # type: ignore 
+from evaluation_core import RuntimeDeadlineExceeded, safe_error_type
 
 from agents.base import (
     AgentOutput,
     SubAgentGraph,
     SubAgentState,
+    llm_deadline_kwargs,
+    llm_telemetry_kwargs,
     load_prompt,
     serialized_invoke,
 )
@@ -84,6 +87,11 @@ class ClinicalTrialsState(TypedDict):
     citations: List[str]
     confidence: float
     model_used: str
+    synthesis_context: List[Dict[str, Any]]
+    stage_latency_sec: Dict[str, float]
+    token_usage: Dict[str, int]
+    cost_breakdown_usd: Dict[str, float]
+    attempt_events: List[Dict[str, Any]]
 
     # ---- Metadata ----
     error: Optional[str]
@@ -201,13 +209,15 @@ class ClinicalTrialsAgentGraph(SubAgentGraph):
                 messages=[{"role": "user", "content": prompt_text}],
                 temperature=0.3,
                 max_tokens=500,
+                **llm_deadline_kwargs(state),
+                **llm_telemetry_kwargs(state, "agent_query_expansion"),
             )
             return {"expanded_query": expanded.strip() if expanded else query}
         except Exception as exc:
             logger.warning(
-                "%s: query expansion failed, using original: %s",
+                "%s: query expansion failed error_type=%s",
                 self.domain,
-                exc,
+                safe_error_type(exc),
             )
             return {"expanded_query": query}
 
@@ -222,16 +232,25 @@ class ClinicalTrialsAgentGraph(SubAgentGraph):
         max_trials = context.get("max_trials", self.MAX_TRIALS)
 
         try:
-            result = self.fetcher.analyze_user_query(query)
+            result = self.fetcher.analyze_user_query(
+                query,
+                llm_kwargs={
+                    **llm_deadline_kwargs(state),
+                    **llm_telemetry_kwargs(
+                        state, "clinical_trials_query_extraction"
+                    ),
+                },
+            )
 
             if not result.get("success"):
                 logger.warning(
-                    "ClinicalTrials fetch failed: %s", result.get("error")
+                    "ClinicalTrials fetch failed error_type=%s",
+                    result.get("error_type") or "FetcherError",
                 )
                 return {
                     "fetched_studies": [],
                     "fetch_meta": result,
-                    "error": result.get("error", "Fetch failed"),
+                    "error": "clinical_trials_fetch_failed",
                 }
 
             studies = result.get("data", {}).get("studies", [])
@@ -248,11 +267,14 @@ class ClinicalTrialsAgentGraph(SubAgentGraph):
                 "fetch_meta": result.get("query_analysis", {}),
             }
         except Exception as exc:
-            logger.error("ClinicalTrials fetch error: %s", exc, exc_info=True)
+            logger.error(
+                "ClinicalTrials fetch failed error_type=%s",
+                safe_error_type(exc),
+            )
             return {
                 "fetched_studies": [],
                 "fetch_meta": {},
-                "error": str(exc),
+                "error": f"fetch_failed:{safe_error_type(exc)}",
             }
 
     # ------------------------------------------------------------------ #
@@ -310,11 +332,24 @@ class ClinicalTrialsAgentGraph(SubAgentGraph):
 
             # Build HNSW dense index
             try:
-                embeddings = self.embedder.embed_batch(all_chunk_texts)
+                deadline_at = (state.get("context") or {}).get(
+                    "_runtime_deadline_at_monotonic"
+                )
+                embeddings = self.embedder.embed_batch(
+                    all_chunk_texts,
+                    deadline_at=deadline_at,
+                    client_max_attempts=(
+                        1 if deadline_at is not None else None
+                    ),
+                )
+            except RuntimeDeadlineExceeded:
+                raise
             except Exception as exc:
                 embeddings = []
                 logger.warning(
-                    "Dense indexing unavailable; continuing with BM25: %s", exc
+                    "Dense indexing unavailable; continuing with BM25 "
+                    "error_type=%s",
+                    safe_error_type(exc),
                 )
 
             if embeddings:
@@ -336,8 +371,14 @@ class ClinicalTrialsAgentGraph(SubAgentGraph):
             return {"chunks_ready": True}
 
         except Exception as exc:
-            logger.error("Chunk/index failed: %s", exc, exc_info=True)
-            return {"chunks_ready": False, "error": str(exc)}
+            logger.error(
+                "Chunk/index failed error_type=%s",
+                safe_error_type(exc),
+            )
+            return {
+                "chunks_ready": False,
+                "error": f"chunk_index_failed:{safe_error_type(exc)}",
+            }
 
     # ------------------------------------------------------------------ #
     # Node: retrieve — hybrid BM25 + HNSW with RRF
@@ -358,7 +399,13 @@ class ClinicalTrialsAgentGraph(SubAgentGraph):
 
         start = time.time()
         try:
-            results = self._hybrid.retrieve(query, top_k=top_k * 3)
+            results = self._hybrid.retrieve(
+                query,
+                top_k=top_k * 3,
+                deadline_at=(state.get("context") or {}).get(
+                    "_runtime_deadline_at_monotonic"
+                ),
+            )
             elapsed = time.time() - start
 
             retrieval_dicts = [
@@ -382,11 +429,14 @@ class ClinicalTrialsAgentGraph(SubAgentGraph):
             }
         except Exception as exc:
             elapsed = time.time() - start
-            logger.error("Retrieval failed: %s", exc, exc_info=True)
+            logger.error(
+                "Retrieval failed error_type=%s",
+                safe_error_type(exc),
+            )
             return {
                 "retrieval_results": [],
                 "retrieval_time_sec": elapsed,
-                "error": str(exc),
+                "error": f"retrieval_failed:{safe_error_type(exc)}",
             }
 
     # ------------------------------------------------------------------ #
@@ -422,7 +472,8 @@ class ClinicalTrialsAgentGraph(SubAgentGraph):
             }
         except Exception as exc:
             logger.warning(
-                "Reranking failed, keeping original order: %s", exc
+                "Reranking failed; keeping original order error_type=%s",
+                safe_error_type(exc),
             )
             return {"reranked_results": results[:top_k]}
 
@@ -446,11 +497,13 @@ class ClinicalTrialsAgentGraph(SubAgentGraph):
                 "citations": [],
                 "confidence": 0.0,
                 "model_used": self.llm.default_model,
+                "synthesis_context": [],
                 "execution_time_sec": time.time() - start,
             }
 
         try:
             sources_text = self._format_sources(results)
+            synthesis_context = self._build_synthesis_context(results)
 
             template = load_prompt(self.domain, "synthesis")
             if not template:
@@ -460,11 +513,17 @@ class ClinicalTrialsAgentGraph(SubAgentGraph):
                 )
 
             prompt_text = template.format(query=query, sources=sources_text)
-            answer = self.llm.chat(
+            from runtime_verification import call_llm_with_metadata
+
+            call_result = call_llm_with_metadata(
+                self.llm,
                 messages=[{"role": "user", "content": prompt_text}],
                 temperature=0.7,
                 max_tokens=1000,
+                **llm_deadline_kwargs(state),
+                **llm_telemetry_kwargs(state, "agent_synthesis"),
             )
+            answer = call_result.text
 
             citations = self._extract_citations(results)
             confidence = self._calculate_confidence(
@@ -478,18 +537,28 @@ class ClinicalTrialsAgentGraph(SubAgentGraph):
                 "answer": answer,
                 "citations": citations,
                 "confidence": confidence,
-                "model_used": self.llm.default_model,
+                "synthesis_context": synthesis_context,
                 "execution_time_sec": time.time() - start,
+                **self._generation_telemetry(state, call_result),
             }
         except Exception as exc:
-            logger.error("Synthesis failed: %s", exc, exc_info=True)
+            logger.error(
+                "Synthesis failed error_type=%s",
+                safe_error_type(exc),
+            )
             return {
-                "answer": f"Error synthesising clinical trials response: {exc}",
+                "answer": "Unable to synthesise the clinical-trial evidence.",
                 "citations": [],
                 "confidence": 0.0,
-                "model_used": "",
-                "error": str(exc),
+                "synthesis_context": [],
+                "error": f"synthesis_failed:{safe_error_type(exc)}",
                 "execution_time_sec": time.time() - start,
+                **self._failure_telemetry(
+                    state,
+                    exc,
+                    stage="agent_synthesis",
+                    latency_sec=time.time() - start,
+                ),
             }
 
     # ------------------------------------------------------------------ #
@@ -666,19 +735,20 @@ class ClinicalTrialsAgentGraph(SubAgentGraph):
             "citations": [],
             "confidence": 0.0,
             "model_used": "",
+            "synthesis_context": [],
+            "stage_latency_sec": {},
+            "token_usage": {},
+            "cost_breakdown_usd": {},
+            "attempt_events": [],
             "error": None,
             "execution_time_sec": 0.0,
         }
 
         result = self.graph.invoke(initial_state)
 
-        return AgentOutput(
-            answer=result.get("answer", ""),
-            citations=result.get("citations", []),
-            confidence=result.get("confidence", 0.0),
-            sources=result.get("reranked_results", []),
-            model_used=result.get("model_used", ""),
-            domain=self.domain,
-            execution_time_sec=time.time() - start,
-            error=result.get("error"),
+        return self._output_from_result(
+            result=result,
+            query=query,
+            context=context,
+            started_at=start,
         )

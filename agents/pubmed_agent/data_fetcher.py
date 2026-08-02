@@ -40,7 +40,13 @@ import requests # type: ignore
 from requests.adapters import HTTPAdapter # type: ignore
 from urllib3.util.retry import Retry # type: ignore
 from pydantic import BaseModel, field_validator # type: ignore
-from tenacity import retry, stop_after_attempt, wait_exponential # type: ignore
+from evaluation_core import safe_error_type, stable_query_fingerprint
+from runtime_verification.deadline import (
+    RuntimeDeadlineExceeded,
+    ensure_deadline,
+    remaining_seconds,
+    sleep_with_deadline,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -154,12 +160,15 @@ class _RateLimiter:
         self._last_call = 0.0
         self._lock = threading.Lock()
 
-    def wait(self) -> None:
+    def wait(self, deadline_at: Optional[float] = None) -> None:
         with self._lock:
+            ensure_deadline(deadline_at)
             now = time.time()
             elapsed = now - self._last_call
             if elapsed < self._min_interval:
-                time.sleep(self._min_interval - elapsed)
+                sleep_with_deadline(
+                    self._min_interval - elapsed, deadline_at
+                )
             self._last_call = time.time()
 
 
@@ -223,8 +232,8 @@ class Paper:
 
 def _build_session() -> requests.Session:
     retry_strategy = Retry(
-        total=4,
-        backoff_factor=0.5,
+        total=0,
+        backoff_factor=0,
         status_forcelist=[429, 500, 502, 503, 504],
         allowed_methods=frozenset(["GET"]),
     )
@@ -286,6 +295,8 @@ class PubMedFetcher:
         self,
         user_query: str,
         max_retries: int = 3,
+        llm_kwargs: Optional[Dict[str, Any]] = None,
+        deadline_at: Optional[float] = None,
     ) -> PubMedSearchTerms:
         """Extract medical search concepts from user query via LLM.
 
@@ -293,12 +304,17 @@ class PubMedFetcher:
         """
         prompt = _TERM_EXTRACTION_PROMPT.format(query=user_query)
 
-        for attempt in range(max_retries):
+        llm_kwargs = dict(llm_kwargs or {})
+        deadline_at = deadline_at or llm_kwargs.get("deadline_at")
+        attempts = 1 if llm_kwargs else max_retries
+        for attempt in range(attempts):
+            ensure_deadline(deadline_at)
             try:
                 raw = self.llm.chat(
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.1,
                     max_tokens=300,
+                    **llm_kwargs,
                 )
                 # Strip markdown fences if present
                 clean = re.sub(r"```(?:json)?", "", raw).strip()
@@ -315,13 +331,17 @@ class PubMedFetcher:
                     len(terms.synonyms),
                 )
                 return terms
+            except RuntimeDeadlineExceeded:
+                raise
             except Exception as exc:
                 logger.warning(
-                    "Term extraction attempt %d/%d failed: %s",
-                    attempt + 1, max_retries, exc,
+                    "Term extraction attempt %d/%d failed error_type=%s",
+                    attempt + 1,
+                    attempts,
+                    safe_error_type(exc),
                 )
-                if attempt < max_retries - 1:
-                    time.sleep(1)
+                if attempt < attempts - 1:
+                    sleep_with_deadline(1, deadline_at)
 
         logger.warning("All LLM attempts failed — using keyword fallback")
         return PubMedSearchTerms.from_query(user_query)
@@ -421,6 +441,7 @@ class PubMedFetcher:
         self,
         urls: List[str],
         max_results: int = 100,
+        deadline_at: Optional[float] = None,
     ) -> Tuple[List[str], List[str]]:
         """Execute ESearch URLs and return deduplicated PMIDs.
 
@@ -433,13 +454,17 @@ class PubMedFetcher:
         urls_used: List[str] = []
 
         for url in urls:
+            ensure_deadline(deadline_at)
             full_url = url
             if self._api_key:
                 full_url += f"&api_key={self._api_key}"
 
-            self._rate_limiter.wait()
+            self._rate_limiter.wait(deadline_at)
             try:
-                resp = self._session.get(full_url, timeout=30)
+                resp = self._session.get(
+                    full_url,
+                    timeout=remaining_seconds(deadline_at, default=30),
+                )
                 resp.raise_for_status()
                 data = resp.json()
                 pmids = data.get("esearchresult", {}).get("idlist", [])
@@ -448,9 +473,19 @@ class PubMedFetcher:
                         if p not in seen:
                             seen[p] = len(seen)
                     urls_used.append(url)
-                    logger.info("ESearch returned %d PMIDs from %s", len(pmids), url[:80])
+                    logger.info(
+                        "ESearch returned %d PMIDs url_sha256=%s",
+                        len(pmids),
+                        stable_query_fingerprint(url),
+                    )
+            except RuntimeDeadlineExceeded:
+                raise
             except Exception as exc:
-                logger.warning("ESearch failed for URL %s: %s", url[:80], exc)
+                logger.warning(
+                    "ESearch failed url_sha256=%s error_type=%s",
+                    stable_query_fingerprint(url),
+                    safe_error_type(exc),
+                )
 
         ordered = sorted(seen.keys(), key=lambda p: seen[p])
         result = ordered[:max_results]
@@ -465,6 +500,7 @@ class PubMedFetcher:
         self,
         pmids: List[str],
         include_fulltext: Optional[bool] = None,
+        deadline_at: Optional[float] = None,
     ) -> Dict[str, Paper]:
         """Fetch paper metadata + abstracts in parallel.
 
@@ -477,18 +513,26 @@ class PubMedFetcher:
         """
         if not pmids:
             return {}
+        ensure_deadline(deadline_at)
 
         ft = include_fulltext if include_fulltext is not None else self.include_fulltext
         unique = list(dict.fromkeys(pmids))
         logger.info("Fetching %d papers (fulltext=%s)...", len(unique), ft)
 
-        metadata = self._bulk_fetch_metadata(unique)
+        metadata = self._bulk_fetch_metadata(
+            unique, deadline_at=deadline_at
+        )
 
         papers: Dict[str, Paper] = {}
 
         def _fetch_one(pmid: str) -> Optional[Paper]:
-            self._rate_limiter.wait()
-            return self._build_paper(pmid, metadata.get(pmid, {}), ft)
+            self._rate_limiter.wait(deadline_at)
+            return self._build_paper(
+                pmid,
+                metadata.get(pmid, {}),
+                ft,
+                deadline_at=deadline_at,
+            )
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as pool:
             futures = {pool.submit(_fetch_one, pmid): pmid for pmid in unique}
@@ -504,27 +548,41 @@ class PubMedFetcher:
     # Internal helpers — ported from PubMedClient
     # ------------------------------------------------------------------
 
-    def _bulk_fetch_metadata(self, pmids: List[str]) -> Dict[str, Dict]:
+    def _bulk_fetch_metadata(
+        self,
+        pmids: List[str],
+        *,
+        deadline_at: Optional[float] = None,
+    ) -> Dict[str, Dict]:
         """Batch-fetch ESummary metadata for all PMIDs."""
         metadata: Dict[str, Dict] = {}
 
         for i in range(0, len(pmids), MAX_PAPERS_PER_BATCH):
+            ensure_deadline(deadline_at)
             batch = pmids[i : i + MAX_PAPERS_PER_BATCH]
             ids_param = ",".join(batch)
             url = f"{ESUMMARY_URL}?db=pubmed&id={ids_param}&retmode=json"
             if self._api_key:
                 url += f"&api_key={self._api_key}"
 
-            self._rate_limiter.wait()
+            self._rate_limiter.wait(deadline_at)
             try:
-                resp = self._session.get(url, timeout=60)
+                resp = self._session.get(
+                    url,
+                    timeout=remaining_seconds(deadline_at, default=60),
+                )
                 resp.raise_for_status()
                 data = resp.json().get("result", {})
                 for pmid in batch:
                     if pmid in data and pmid != "uids":
                         metadata[pmid] = data[pmid]
+            except RuntimeDeadlineExceeded:
+                raise
             except Exception as exc:
-                logger.warning("ESummary batch failed: %s", exc)
+                logger.warning(
+                    "ESummary batch failed error_type=%s",
+                    safe_error_type(exc),
+                )
 
         return metadata
 
@@ -533,9 +591,12 @@ class PubMedFetcher:
         pmid: str,
         meta: Dict,
         include_fulltext: bool,
+        *,
+        deadline_at: Optional[float] = None,
     ) -> Optional[Paper]:
         """Build a Paper from ESummary metadata + fetched abstract."""
         try:
+            ensure_deadline(deadline_at)
             title   = meta.get("title", "No title")
             journal = meta.get("fulljournalname", "Unknown journal")
             pub_date = meta.get("pubdate", "")
@@ -555,8 +616,14 @@ class PubMedFetcher:
                 if a.get("name")
             ]
 
-            abstract = self._fetch_abstract(pmid)
-            full_text = self._fetch_fulltext(meta) if include_fulltext else None
+            abstract = self._fetch_abstract(
+                pmid, deadline_at=deadline_at
+            )
+            full_text = (
+                self._fetch_fulltext(meta, deadline_at=deadline_at)
+                if include_fulltext
+                else None
+            )
 
             return Paper(
                 pmid=pmid,
@@ -571,18 +638,29 @@ class PubMedFetcher:
                 abstract=abstract,
                 full_text=full_text,
             )
+        except RuntimeDeadlineExceeded:
+            raise
         except Exception as exc:
-            logger.warning("_build_paper failed for PMID %s: %s", pmid, exc)
+            logger.warning(
+                "_build_paper failed for PMID %s error_type=%s",
+                pmid,
+                safe_error_type(exc),
+            )
             return None
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=0.5, min=0.5, max=5))
-    def _fetch_abstract(self, pmid: str) -> str:
+    def _fetch_abstract(
+        self, pmid: str, *, deadline_at: Optional[float] = None
+    ) -> str:
         """Fetch and parse abstract XML for a single PMID."""
         url = f"{EFETCH_URL}?db=pubmed&id={pmid}&retmode=xml&rettype=abstract"
         if self._api_key:
             url += f"&api_key={self._api_key}"
         try:
-            resp = self._session.get(url, timeout=30)
+            ensure_deadline(deadline_at)
+            resp = self._session.get(
+                url,
+                timeout=remaining_seconds(deadline_at, default=30),
+            )
             resp.raise_for_status()
             root = ET.fromstring(resp.text)
             parts = []
@@ -592,11 +670,15 @@ class PubMedFetcher:
                 if text:
                     parts.append(f"{label}: {text}" if label else text)
             return " ".join(parts) if parts else "No abstract available."
+        except RuntimeDeadlineExceeded:
+            raise
         except Exception as exc:
             logger.debug("Abstract fetch failed for PMID %s: %s", pmid, exc)
             return "No abstract available."
 
-    def _fetch_fulltext(self, meta: Dict) -> Optional[str]:
+    def _fetch_fulltext(
+        self, meta: Dict, *, deadline_at: Optional[float] = None
+    ) -> Optional[str]:
         """Fetch PMC full text if a PMC ID exists in article metadata."""
         pmc_id = None
         for aid in meta.get("articleids", []):
@@ -610,9 +692,15 @@ class PubMedFetcher:
         if self._api_key:
             url += f"&api_key={self._api_key}"
         try:
-            resp = self._session.get(url, timeout=60)
+            ensure_deadline(deadline_at)
+            resp = self._session.get(
+                url,
+                timeout=remaining_seconds(deadline_at, default=60),
+            )
             resp.raise_for_status()
             return self._extract_pmc_text(resp.text)
+        except RuntimeDeadlineExceeded:
+            raise
         except Exception as exc:
             logger.debug("Full-text fetch failed for PMC %s: %s", pmc_id, exc)
             return None
@@ -649,6 +737,8 @@ class PubMedFetcher:
         user_input: str,
         max_papers: int = 50,
         include_fulltext: Optional[bool] = None,
+        llm_kwargs: Optional[Dict[str, Any]] = None,
+        deadline_at: Optional[float] = None,
     ) -> Dict[str, Any]:
         """Full pipeline: concept extraction → URL build → search → fetch.
 
@@ -658,14 +748,29 @@ class PubMedFetcher:
             Keys: success, papers (Dict[str,Paper]), total_count,
             pmids_fetched, urls_used, query_analysis, error.
         """
-        logger.info("PubMedFetcher.analyze_user_query: %s", user_input[:80])
+        deadline_at = deadline_at or dict(llm_kwargs or {}).get(
+            "deadline_at"
+        )
         try:
-            terms = self.extract_search_terms(user_input)
+            ensure_deadline(deadline_at)
+            terms = self.extract_search_terms(
+                user_input,
+                llm_kwargs=llm_kwargs,
+                deadline_at=deadline_at,
+            )
             urls  = self.build_urls(terms)
-            pmids, urls_used = self.search_pmids(urls, max_results=max_papers)
+            pmids, urls_used = self.search_pmids(
+                urls,
+                max_results=max_papers,
+                deadline_at=deadline_at,
+            )
 
             ft = include_fulltext if include_fulltext is not None else self.include_fulltext
-            papers = self.fetch_papers(pmids, include_fulltext=ft)
+            papers = self.fetch_papers(
+                pmids,
+                include_fulltext=ft,
+                deadline_at=deadline_at,
+            )
 
             return {
                 "success": True,
@@ -682,8 +787,21 @@ class PubMedFetcher:
                 },
                 "error": None,
             }
+        except RuntimeDeadlineExceeded as exc:
+            return {
+                "success": False,
+                "papers": {},
+                "total_count": 0,
+                "pmids_fetched": [],
+                "urls_used": [],
+                "error": "runtime_deadline_exhausted",
+                "error_type": "runtime_deadline_exhausted",
+            }
         except Exception as exc:
-            logger.error("analyze_user_query failed: %s", exc, exc_info=True)
+            logger.error(
+                "PubMed query analysis failed error_type=%s",
+                safe_error_type(exc),
+            )
             return {
                 "success": False,
                 "papers": {},
@@ -691,5 +809,6 @@ class PubMedFetcher:
                 "pmids_fetched": [],
                 "urls_used": [],
                 "query_analysis": {},
-                "error": str(exc),
+                "error": f"pubmed_query_failed:{safe_error_type(exc)}",
+                "error_type": safe_error_type(exc),
             }

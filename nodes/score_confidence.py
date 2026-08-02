@@ -59,12 +59,17 @@ def score_confidence(state: AgentState) -> AgentState:
 
     except Exception as e:
         logger.error(
-            f"[{trace_id}] score_confidence: Failed to calculate confidence: {str(e)}",
-            exc_info=True,
+            "[%s] score_confidence failed error_type=%s",
+            trace_id,
+            type(e).__name__,
         )
-        state["confidence_score"] = 0.5  # Conservative default
-        state["coverage_explanation"] = f"Confidence calculation error: {str(e)}"
+        state["confidence_score"] = 0.0
+        state["coverage_explanation"] = (
+            f"Confidence calculation error_type={type(e).__name__}"
+        )
         state["error_occurred"] = True
-        state["error_messages"].append(f"Confidence scoring error: {str(e)}")
+        state["error_messages"].append(
+            f"Confidence scoring error_type={type(e).__name__}"
+        )
 
     return state

@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 import numpy as np
+from evaluation_core import RuntimeDeadlineExceeded, ensure_deadline
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +67,13 @@ class SemanticChunker:
     # Public API
     # ------------------------------------------------------------------ #
 
-    def chunk(self, text: str) -> List[Chunk]:
+    def chunk(
+        self,
+        text: str,
+        *,
+        deadline_at: Optional[float] = None,
+        client_max_attempts: Optional[int] = None,
+    ) -> List[Chunk]:
         """Split *text* into chunks.
 
         Tries semantic chunking first (if an embedder is available),
@@ -74,12 +81,19 @@ class SemanticChunker:
         """
         if not text or not text.strip():
             return []
+        ensure_deadline(deadline_at)
 
         if self._embedder is not None:
             try:
-                chunks = self._semantic_chunk(text)
+                chunks = self._semantic_chunk(
+                    text,
+                    deadline_at=deadline_at,
+                    client_max_attempts=client_max_attempts,
+                )
                 if chunks:
                     return chunks
+            except RuntimeDeadlineExceeded:
+                raise
             except Exception:
                 logger.warning(
                     "Semantic chunking failed — falling back to recursive",
@@ -92,13 +106,23 @@ class SemanticChunker:
     # Semantic chunking
     # ------------------------------------------------------------------ #
 
-    def _semantic_chunk(self, text: str) -> List[Chunk]:
+    def _semantic_chunk(
+        self,
+        text: str,
+        *,
+        deadline_at: Optional[float] = None,
+        client_max_attempts: Optional[int] = None,
+    ) -> List[Chunk]:
         """Embed sentences, detect boundaries via cosine-similarity drops."""
         sentences = self._split_sentences(text)
         if len(sentences) < 2:
             return [Chunk(text=text.strip(), index=0, start_char=0, end_char=len(text))]
 
-        embeddings = self._embedder.embed_batch([s for s in sentences])
+        embeddings = self._embedder.embed_batch(
+            [s for s in sentences],
+            deadline_at=deadline_at,
+            client_max_attempts=client_max_attempts,
+        )
         if len(embeddings) < 2:
             return [Chunk(text=text.strip(), index=0, start_char=0, end_char=len(text))]
 

@@ -38,6 +38,13 @@ from urllib.parse import quote_plus
 
 import requests  # type: ignore
 from pydantic import BaseModel, field_validator  # type: ignore
+from evaluation_core import safe_error_type, stable_query_fingerprint
+from runtime_verification.deadline import (
+    RuntimeDeadlineExceeded,
+    ensure_deadline,
+    remaining_seconds,
+    sleep_with_deadline,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -277,6 +284,8 @@ class FDAFetcher:
         user_query: str,
         max_retries: int = 2,
         wait_seconds: int = 1,
+        llm_kwargs: Optional[Dict[str, Any]] = None,
+        deadline_at: Optional[float] = None,
     ) -> FDASearchTerms:
         """Extract FDA regulatory search concepts from a user query via LLM.
 
@@ -301,12 +310,17 @@ class FDAFetcher:
         """
         prompt = _TERM_EXTRACTION_PROMPT.format(query=user_query)
 
-        for attempt in range(max_retries):
+        llm_kwargs = dict(llm_kwargs or {})
+        deadline_at = deadline_at or llm_kwargs.get("deadline_at")
+        attempts = 1 if llm_kwargs else max_retries
+        for attempt in range(attempts):
+            ensure_deadline(deadline_at)
             try:
                 raw = self.llm.chat(
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.1,   # deterministic concept extraction
                     max_tokens=150,    # term lists are short
+                    **llm_kwargs,
                 )
 
                 data: Dict[str, List[str]] = {
@@ -348,17 +362,21 @@ class FDAFetcher:
                     "Attempt %d: LLM returned empty concept lists", attempt + 1
                 )
 
+            except RuntimeDeadlineExceeded:
+                raise
             except Exception as exc:
                 logger.warning(
-                    "Term extraction attempt %d failed: %s", attempt + 1, exc
+                    "Term extraction attempt %d failed error_type=%s",
+                    attempt + 1,
+                    safe_error_type(exc),
                 )
 
-            if attempt < max_retries - 1:
-                time.sleep(wait_seconds)
+            if attempt < attempts - 1:
+                sleep_with_deadline(wait_seconds, deadline_at)
 
         logger.warning(
             "LLM term extraction failed after %d attempts; using keyword fallback",
-            max_retries,
+            attempts,
         )
         return FDASearchTerms.from_query(user_query)
 
@@ -461,7 +479,10 @@ class FDAFetcher:
     # ------------------------------------------------------------------ #
 
     def _fetch_single(
-        self, url: str, timeout: int = 30
+        self,
+        url: str,
+        timeout: int = 30,
+        deadline_at: Optional[float] = None,
     ) -> Tuple[str, Optional[Any], Optional[str]]:
         """Thread worker: fetch one openFDA URL and validate the response.
 
@@ -482,7 +503,11 @@ class FDAFetcher:
             json_data is None on any failure; error_message is None on success.
         """
         try:
-            r = self._session.get(url, timeout=timeout)
+            ensure_deadline(deadline_at)
+            r = self._session.get(
+                url,
+                timeout=remaining_seconds(deadline_at, default=timeout),
+            )
             r.raise_for_status()
 
             if "application/json" not in r.headers.get("Content-Type", ""):
@@ -493,18 +518,27 @@ class FDAFetcher:
             records = data.get("results", [])
 
             if total > 0 and records:
-                logger.info("Fetched %d records from %s", total, url)
+                logger.info(
+                    "Fetched %d records url_sha256=%s",
+                    total,
+                    stable_query_fingerprint(url),
+                )
                 return url, data, None
 
             return url, None, f"empty (total={total})"
 
+        except RuntimeDeadlineExceeded:
+            raise
         except requests.exceptions.RequestException as exc:
             return url, None, f"HTTP error: {exc}"
         except Exception as exc:
             return url, None, str(exc)
 
     def fetch_fda_data(
-        self, urls: List[str]
+        self,
+        urls: List[str],
+        *,
+        deadline_at: Optional[float] = None,
     ) -> Tuple[Dict[str, Any], List[str]]:
         """Fetch records from multiple openFDA URLs in parallel.
 
@@ -525,15 +559,27 @@ class FDAFetcher:
         """
         accessible: Dict[str, Any] = {}
         failed: List[str] = []
+        ensure_deadline(deadline_at)
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as pool:
-            futures = {pool.submit(self._fetch_single, u): u for u in urls}
+            futures = {
+                pool.submit(
+                    self._fetch_single,
+                    u,
+                    deadline_at=deadline_at,
+                ): u
+                for u in urls
+            }
             for fut in as_completed(futures):
                 url, data, err = fut.result()
                 if data is not None:
                     accessible[url] = data
                 else:
-                    logger.warning("Failed URL %s: %s", url, err)
+                    logger.warning(
+                        "FDA fetch failed url_sha256=%s error_type=%s",
+                        stable_query_fingerprint(url),
+                        "provider_response_error",
+                    )
                     failed.append(url)
 
         logger.info(
@@ -634,6 +680,8 @@ class FDAFetcher:
         self,
         user_input: str,
         retry_broad: bool = True,
+        llm_kwargs: Optional[Dict[str, Any]] = None,
+        deadline_at: Optional[float] = None,
     ) -> Dict[str, Any]:
         """Analyse a natural language query and fetch matching FDA records.
 
@@ -666,27 +714,42 @@ class FDAFetcher:
         >>> result["query_analysis"]["url_strategy"]
         'hybrid_llm_terms_deterministic_builder'
         """
-        logger.info("Analyzing FDA query: %s", user_input)
-
+        deadline_at = deadline_at or dict(llm_kwargs or {}).get(
+            "deadline_at"
+        )
         try:
+            ensure_deadline(deadline_at)
             # Step 1 — Extract concepts
-            terms = self.extract_search_terms(user_input)
-            logger.info("FDA search terms: %s", terms.model_dump())
+            terms = self.extract_search_terms(
+                user_input,
+                llm_kwargs=llm_kwargs,
+                deadline_at=deadline_at,
+            )
+            logger.info(
+                "FDA search term extraction complete term_count=%d",
+                len(terms.all_terms),
+            )
 
             # Step 2 — Build URLs
             urls = self.build_urls(terms)
 
             # Step 3 — Parallel fetch
-            accessible, failed = self.fetch_fda_data(urls)
+            ensure_deadline(deadline_at)
+            accessible, failed = self.fetch_fda_data(
+                urls, deadline_at=deadline_at
+            )
 
             # Step 4 — Broad retry on total failure
             if not accessible and retry_broad and terms.all_terms:
+                ensure_deadline(deadline_at)
                 logger.warning(
                     "All %d URLs returned empty. Retrying in broad mode...",
                     len(urls),
                 )
                 broad_urls = self.build_urls(terms, broad_mode=True)
-                accessible, failed_broad = self.fetch_fda_data(broad_urls)
+                accessible, failed_broad = self.fetch_fda_data(
+                    broad_urls, deadline_at=deadline_at
+                )
                 failed += failed_broad
                 urls += broad_urls
 
@@ -725,13 +788,24 @@ class FDAFetcher:
                 },
             }
 
+        except RuntimeDeadlineExceeded as exc:
+            return {
+                "success": False,
+                "error": "runtime_deadline_exhausted",
+                "error_type": "runtime_deadline_exhausted",
+                "data": None,
+                "total_count": 0,
+                "source_url": "",
+            }
         except Exception as exc:
             logger.error(
-                "Error in FDA analyze_user_query: %s", exc, exc_info=True
+                "FDA query analysis failed error_type=%s",
+                safe_error_type(exc),
             )
             return {
                 "success": False,
-                "error": str(exc),
+                "error": f"fda_query_failed:{safe_error_type(exc)}",
+                "error_type": safe_error_type(exc),
                 "data": None,
                 "total_count": 0,
                 "source_url": "",
