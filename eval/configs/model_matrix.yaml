@@ -1,0 +1,326 @@
+# Model matrix for evaluation runs (Step 2 — Aug 2026 pricing)
+#
+# LIVE MODEL IDs MUST BE RESOLVED BY PREFLIGHT BEFORE PAID RUNS.
+# Re-verify every id and rate against provider dashboards immediately before
+# any paid pilot; keep pricing_verified accurate.
+#
+# Preflight checklist:
+#   1. Verify each model responds via llm_client / LiteLLM
+#   2. Record resolved model_name + revision + run_date in run_meta
+#   3. Confirm cost_per_1k_* in models.yaml matches provider dashboard
+#   4. Never log or commit API keys
+#
+# Retired xAI ids (do NOT use): grok-4-1-fast*, grok-4-fast*, grok-4-0709, grok-3*
+
+protocol_version: "2B"
+models_yaml: "../../models.yaml"
+preflight_required: true
+pricing_as_of: "2026-08-03"
+
+roles:
+  generation:
+    description: Primary answer synthesis in LangGraph orchestrator
+    candidates:
+      - id: gpt-5.6-luna
+        provider: openai
+        tier: budget
+        env_vars: [OPENAI_API_KEY]
+        cost_per_1m_input: 0.20
+        cost_per_1m_output: 1.20
+        cost_per_1k_input: 0.0002
+        cost_per_1k_output: 0.0012
+        pricing_verified: true
+        in_models_yaml: true
+        notes: Preferred budget generation model for new pilots
+
+      - id: gemini/gemini-3.1-flash-lite
+        provider: google
+        tier: budget
+        env_vars: [GEMINI_API_KEY]
+        cost_per_1m_input: 0.25
+        cost_per_1m_output: 1.50
+        cost_per_1k_input: 0.00025
+        cost_per_1k_output: 0.0015
+        pricing_verified: true
+        in_models_yaml: true
+        notes: Replaces gemini-2.5-flash (deprecates 2026-10-16) for new runs
+
+      - id: xai/grok-4.3
+        provider: xai
+        tier: fast
+        env_vars: [XAI_API_KEY]
+        cost_per_1m_input: 1.25
+        cost_per_1m_output: 2.50
+        cost_per_1m_cached_input: 0.20
+        cost_per_1k_input: 0.00125
+        cost_per_1k_output: 0.0025
+        cost_per_1k_cached_input: 0.0002
+        context_window_tokens: 1000000
+        pricing_verified: true
+        in_models_yaml: true
+
+      - id: gpt-5.6-terra
+        provider: openai
+        tier: production
+        env_vars: [OPENAI_API_KEY]
+        cost_per_1m_input: 2.00
+        cost_per_1m_output: 12.00
+        cost_per_1k_input: 0.002
+        cost_per_1k_output: 0.012
+        pricing_verified: true
+        in_models_yaml: true
+
+      - id: xai/grok-4.5
+        provider: xai
+        tier: stronger
+        env_vars: [XAI_API_KEY]
+        cost_per_1m_input: 2.00
+        cost_per_1m_output: 6.00
+        cost_per_1m_cached_input: 0.30
+        cost_per_1k_input: 0.002
+        cost_per_1k_output: 0.006
+        cost_per_1k_cached_input: 0.0003
+        context_window_tokens: 500000
+        pricing_verified: true
+        in_models_yaml: true
+        notes: Cached input $0.30/1M per docs.x.ai (not $0.50). grok-build-0.1 is a separate coding model ($1/$2) — not an alias.
+
+      - id: gpt-4o
+        provider: openai
+        tier: historical_baseline
+        env_vars: [OPENAI_API_KEY]
+        cost_per_1m_input: 2.50
+        cost_per_1m_output: 10.00
+        cost_per_1k_input: 0.0025
+        cost_per_1k_output: 0.01
+        pricing_verified: true
+        in_models_yaml: true
+        notes: Legacy paper baseline; keep for comparison
+
+      - id: gpt-5
+        provider: openai
+        tier: production
+        env_vars: [OPENAI_API_KEY]
+        cost_per_1m_input: 1.25
+        cost_per_1m_output: 10.00
+        cost_per_1k_input: 0.00125
+        cost_per_1k_output: 0.01
+        pricing_verified: false
+        in_models_yaml: true
+        notes: Sources disagree (may be $0.625/$5 per 1M); confirm on OpenAI dashboard before paid runs
+
+      - id: gemini/gemini-3.6-flash
+        provider: google
+        tier: production
+        env_vars: [GEMINI_API_KEY]
+        cost_per_1m_input: 1.50
+        cost_per_1m_output: 7.50
+        cost_per_1k_input: 0.0015
+        cost_per_1k_output: 0.0075
+        pricing_verified: true
+        in_models_yaml: true
+
+      - id: gemini/gemini-3.1-pro
+        provider: google
+        tier: flagship
+        env_vars: [GEMINI_API_KEY]
+        cost_per_1m_input: 2.00
+        cost_per_1m_output: 12.00
+        cost_per_1m_input_over_200k: 4.00
+        cost_per_1m_output_over_200k: 18.00
+        cost_per_1k_input: 0.002
+        cost_per_1k_output: 0.012
+        cost_per_1k_input_over_200k: 0.004
+        cost_per_1k_output_over_200k: 0.018
+        pricing_verified: true
+        in_models_yaml: true
+        notes: Flagship column; use <=200K tier for MedAgentsBench mid-token planning unless context exceeds 200K
+
+      - id: anthropic/claude-sonnet-5
+        provider: anthropic
+        tier: production
+        env_vars: [ANTHROPIC_API_KEY]
+        pricing_verified: true
+        in_models_yaml: true
+        pricing_schedule:
+          - effective_through: "2026-08-31"
+            label: introductory
+            cost_per_1m_input: 2.00
+            cost_per_1m_output: 10.00
+            cost_per_1k_input: 0.002
+            cost_per_1k_output: 0.01
+          - effective_from: "2026-09-01"
+            label: standard
+            cost_per_1m_input: 3.00
+            cost_per_1m_output: 15.00
+            cost_per_1k_input: 0.003
+            cost_per_1k_output: 0.015
+        notes: Pin run_date against pricing cliff; use introductory rates for Aug 2026 pilots
+
+      - id: anthropic/claude-opus-4-8
+        provider: anthropic
+        tier: flagship
+        env_vars: [ANTHROPIC_API_KEY]
+        cost_per_1m_input: 5.00
+        cost_per_1m_output: 25.00
+        cost_per_1k_input: 0.005
+        cost_per_1k_output: 0.025
+        pricing_verified: true
+        in_models_yaml: true
+
+      - id: gpt-4.1
+        provider: openai
+        tier: legacy
+        env_vars: [OPENAI_API_KEY]
+        pricing_verified: false
+        in_models_yaml: false
+        notes: Optional; resolve LiteLLM slug at preflight — not in models.yaml yet
+
+      - id: gpt-4.1-mini
+        provider: openai
+        tier: legacy
+        env_vars: [OPENAI_API_KEY]
+        pricing_verified: false
+        in_models_yaml: false
+        notes: Optional; resolve LiteLLM slug at preflight — not in models.yaml yet
+
+      - id: gemini/gemini-2.5-flash
+        provider: google
+        tier: deprecated
+        env_vars: [GEMINI_API_KEY]
+        pricing_verified: true
+        in_models_yaml: true
+        deprecates_on: "2026-10-16"
+        notes: Do not use for new runs; prefer gemini-3.1-flash-lite
+
+  judge:
+    description: Coherence eval, RAGAS, MCQ extraction — may differ from generation
+    candidates:
+      - id: gemini/gemini-3.1-flash-lite
+        provider: google
+        env_vars: [GEMINI_API_KEY]
+        cost_per_1k_input: 0.00025
+        cost_per_1k_output: 0.0015
+        pricing_verified: true
+        in_models_yaml: true
+      - id: gemini/gemini-3.6-flash
+        provider: google
+        env_vars: [GEMINI_API_KEY]
+        cost_per_1k_input: 0.0015
+        cost_per_1k_output: 0.0075
+        pricing_verified: true
+        in_models_yaml: true
+      - id: gpt-4o
+        provider: openai
+        env_vars: [OPENAI_API_KEY]
+        cost_per_1k_input: 0.0025
+        cost_per_1k_output: 0.01
+        pricing_verified: true
+        in_models_yaml: true
+      - id: anthropic/claude-haiku-4-5-20251001
+        provider: anthropic
+        env_vars: [ANTHROPIC_API_KEY]
+        cost_per_1m_input: 1.00
+        cost_per_1m_output: 5.00
+        cost_per_1k_input: 0.001
+        cost_per_1k_output: 0.005
+        pricing_verified: true
+        in_models_yaml: true
+
+  embeddings:
+    description: Skill discovery and retrieval (not generation)
+    candidates:
+      - id: text-embedding-3-large
+        provider: openai
+        env_vars: [OPENAI_API_KEY]
+        in_models_yaml: true
+      - id: text-embedding-3-small
+        provider: openai
+        env_vars: [OPENAI_API_KEY]
+        in_models_yaml: true
+      - id: gemini/text-embedding-004
+        provider: google
+        env_vars: [GEMINI_API_KEY]
+        in_models_yaml: true
+      - id: ollama/nomic-embed-text
+        provider: ollama
+        env_vars: [OLLAMA_BASE_URL]
+        default_base_url: http://localhost:11434
+        in_models_yaml: true
+
+  local_laptop:
+    description: Zero/low API cost dev and ablation runs via Ollama or vLLM
+    candidates:
+      - id: ollama/mistral
+        provider: ollama
+        env_vars: [OLLAMA_BASE_URL]
+        default_base_url: http://localhost:11434
+        cost_usd_per_1k: 0.0
+        in_models_yaml: true
+      - id: ollama/llama3
+        provider: ollama
+        env_vars: [OLLAMA_BASE_URL]
+        default_base_url: http://localhost:11434
+        cost_usd_per_1k: 0.0
+        in_models_yaml: true
+      - id: ollama/mistral-nemo
+        provider: ollama
+        env_vars: [OLLAMA_BASE_URL]
+        in_models_yaml: false
+        notes: Add to models.yaml if used locally
+      - id: hosted_vllm/mistral-7b-instruct
+        provider: vllm
+        env_vars: [VLLM_BASE_URL, VLLM_API_KEY]
+        in_models_yaml: false
+        notes: Site-specific api_base; add to models.yaml when endpoint is known
+
+environment_variables:
+  OPENAI_API_KEY: Required for OpenAI generation, judge, and embeddings
+  ANTHROPIC_API_KEY: Required for Claude generation and judge candidates
+  GEMINI_API_KEY: Required for Gemini generation, judge, embeddings
+  XAI_API_KEY: Required for Grok candidates
+  COHERE_API_KEY: Optional; cohere/embed-english-v3.0
+  HUGGINGFACE_API_KEY: Optional; huggingface/BAAI/bge-large-en-v1.5
+  OLLAMA_BASE_URL: Local Ollama server (default http://localhost:11434)
+  VLLM_BASE_URL: OpenAI-compatible vLLM endpoint
+  VLLM_API_KEY: Optional bearer token for vLLM
+  LANGSMITH_API_KEY: Optional observability (Phase 5+)
+  LANGSMITH_PROJECT: Optional LangSmith project name
+
+cost_pilot_defaults:
+  smoke_n: 20
+  pilot_n: 100
+  variance_buffer: 0.25
+  fixed_buffer_usd: 5.0
+  projection_targets: [100, 500, 862]
+  mid_tokens_per_question:
+    input: 55000
+    output: 4000
+    notes: Full-orchestrator planning scenario for MedAgentsBench cost tables (Step 3)
+
+benchmark_full_splits:
+  medagentsbench_test_hard: 862
+  medqa: 1273
+  medmcqa: 4183
+  pubmedqa_pqal: 500
+  bioasq_task_b: 500
+
+recommended_pilot_matrix:
+  # Minimal paid pilot — expand only after smoke dry-run passes
+  - generation: gpt-5.6-luna
+    agents: [search_pubmed]
+    n_samples: 20
+  - generation: gemini/gemini-3.1-flash-lite
+    agents: [search_pubmed]
+    n_samples: 20
+  - generation: xai/grok-4.3
+    agents: [search_pubmed]
+    n_samples: 20
+    optional: true
+
+models_yaml_pending:
+  # Documented in matrix but not yet registered in models.yaml
+  - gpt-4.1
+  - gpt-4.1-mini
+  - ollama/mistral-nemo
+  - hosted_vllm/mistral-7b-instruct

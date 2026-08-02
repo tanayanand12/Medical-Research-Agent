@@ -7,11 +7,95 @@ models:
     litellm_params:
       api_key: os.environ/OPENAI_API_KEY
     model_info:
-      cost_per_1k_input_tokens: 0.005
-      cost_per_1k_output_tokens: 0.015
+      cost_per_1k_input_tokens: 0.0025
+      cost_per_1k_output_tokens: 0.01
       context_window_tokens: 128000
       supports_vision: true
       tier: enterprise
+
+  - model_name: gpt-5
+    litellm_params:
+      api_key: os.environ/OPENAI_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.00125
+      cost_per_1k_output_tokens: 0.01
+      context_window_tokens: 128000
+      supports_vision: false
+      tier: enterprise
+      pricing_verified: false
+
+  - model_name: gpt-5.6-terra
+    litellm_params:
+      api_key: os.environ/OPENAI_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.002
+      cost_per_1k_output_tokens: 0.012
+      context_window_tokens: 128000
+      supports_vision: false
+      tier: enterprise
+
+  - model_name: gpt-5.6-luna
+    litellm_params:
+      api_key: os.environ/OPENAI_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.0002
+      cost_per_1k_output_tokens: 0.0012
+      context_window_tokens: 128000
+      supports_vision: false
+      tier: fast
+
+  - model_name: xai/grok-4.3
+    litellm_params:
+      api_key: os.environ/XAI_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.00125
+      cost_per_1k_output_tokens: 0.0025
+      cost_per_1k_cached_input_tokens: 0.0002
+      context_window_tokens: 1000000
+      supports_vision: false
+      tier: fast
+
+  - model_name: xai/grok-4.5
+    litellm_params:
+      api_key: os.environ/XAI_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.002
+      cost_per_1k_output_tokens: 0.006
+      cost_per_1k_cached_input_tokens: 0.0003
+      context_window_tokens: 500000
+      supports_vision: false
+      tier: enterprise
+
+  - model_name: anthropic/claude-sonnet-5
+    litellm_params:
+      api_key: os.environ/ANTHROPIC_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.002
+      cost_per_1k_output_tokens: 0.01
+      context_window_tokens: 200000
+      supports_vision: true
+      tier: enterprise
+      pricing_note: "Intro $2/$10 per 1M through 2026-08-31; $3/$15 from 2026-09-01"
+
+  - model_name: anthropic/claude-opus-4-8
+    litellm_params:
+      api_key: os.environ/ANTHROPIC_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.005
+      cost_per_1k_output_tokens: 0.025
+      context_window_tokens: 200000
+      supports_vision: true
+      tier: enterprise
+
+  - model_name: anthropic/claude-haiku-4-5-20251001
+    litellm_params:
+      api_key: os.environ/ANTHROPIC_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.001
+      cost_per_1k_output_tokens: 0.005
+      context_window_tokens: 200000
+      supports_vision: false
+      tier: fast
 
   - model_name: claude-3-5-sonnet
     litellm_params:
@@ -72,6 +156,38 @@ models:
       context_window_tokens: 128000
       supports_vision: false
       tier: fast
+
+  - model_name: gemini/gemini-3.1-flash-lite
+    litellm_params:
+      api_key: os.environ/GEMINI_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.00025
+      cost_per_1k_output_tokens: 0.0015
+      context_window_tokens: 1000000
+      supports_vision: false
+      tier: fast
+
+  - model_name: gemini/gemini-3.6-flash
+    litellm_params:
+      api_key: os.environ/GEMINI_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.0015
+      cost_per_1k_output_tokens: 0.0075
+      context_window_tokens: 1000000
+      supports_vision: true
+      tier: enterprise
+
+  - model_name: gemini/gemini-3.1-pro
+    litellm_params:
+      api_key: os.environ/GEMINI_API_KEY
+    model_info:
+      cost_per_1k_input_tokens: 0.002
+      cost_per_1k_output_tokens: 0.012
+      cost_per_1k_input_tokens_over_200k: 0.004
+      cost_per_1k_output_tokens_over_200k: 0.018
+      context_window_tokens: 1000000
+      supports_vision: true
+      tier: enterprise
 
   - model_name: gemini/gemini-2.5-flash-lite
     litellm_params:
